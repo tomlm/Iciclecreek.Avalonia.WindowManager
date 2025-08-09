@@ -1,30 +1,38 @@
 ﻿using Avalonia;
+using Avalonia.Animation;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Platform;
+using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using Avalonia.Platform.Storage;
+using Avalonia.Metadata;
 using Avalonia.Platform;
+using Avalonia.Platform.Storage;
+using Avalonia.ReactiveUI;
+using Avalonia.Styling;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
+using Consolonia.Controls;
+using ReactiveUI;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reactive;
+using System.Reactive.Linq;
 using System.Threading.Tasks;
-using Avalonia.Controls.Presenters;
-using Avalonia.Styling;
-using Avalonia.Animation;
-using Avalonia.VisualTree;
-using Avalonia.Metadata;
-using Avalonia.Controls.ApplicationLifetimes;
 
 namespace Iciclecreek.Avalonia.WindowManager;
 
 [TemplatePart(PART_TitleBar, typeof(Control))]
 [TemplatePart(PART_Title, typeof(TextBlock))]
+[TemplatePart(PART_SystemMenu, typeof(Menu))]
+[TemplatePart(PART_SystemMenuItem, typeof(MenuItem))]
 [TemplatePart(PART_MinimizeButton, typeof(Button))]
 [TemplatePart(PART_MaximizeButton, typeof(Button))]
 [TemplatePart(PART_RestoreButton, typeof(Button))]
@@ -37,11 +45,16 @@ public class ManagedWindow : OverlayPopupHost
     public const string PART_ContentPresenter = "PART_ContentPresenter";
     public const string PART_TitleBar = "PART_TitleBar";
     public const string PART_Title = "PART_Title";
+    public const string PART_SystemMenu = "PART_SystemMenu";
+    public const string PART_SystemMenuItem = "PART_SystemMenuItem";
     public const string PART_MinimizeButton = "PART_MinimizeButton";
     public const string PART_MaximizeButton = "PART_MaximizeButton";
     public const string PART_RestoreButton = "PART_RestoreButton";
     public const string PART_CloseButton = "PART_CloseButton";
     public const string PART_WindowBorder = "PART_WindowBorder";
+
+    // used to track MRU windows globally
+    private static List<ManagedWindow> s_MRU = null;
 
     private PixelPoint _minimizedPosition = new PixelPoint(int.MinValue, int.MinValue);
     private Rect _normalRect;
@@ -55,7 +68,21 @@ public class ManagedWindow : OverlayPopupHost
     private object? _dialogResult;
     private Control? _title;
     private Control? _titleBar;
+    private Control? _focus;
+    private Menu? _systemMenu;
+    private MenuItem? _systemMenuItem;
+    private bool _keyboardMoving;
+    private bool _keyboardSizing;
     private readonly List<(ManagedWindow Child, bool IsDialog)> _children = new List<(ManagedWindow, bool)>();
+
+    public ReactiveCommand<Unit, Unit> CloseCommand { get; }
+    public ReactiveCommand<Unit, Unit> RestoreCommand { get; }
+    public ReactiveCommand<Unit, Unit> MinimizeCommand { get; }
+    public ReactiveCommand<Unit, Unit> MaximizeCommand { get; }
+    public ReactiveCommand<Unit, Unit> SizeCommand { get; }
+    public ReactiveCommand<Unit, Unit> MoveCommand { get; }
+    public ReactiveCommand<Unit, Unit> ShowSystemMenuCommand { get; }
+
 
     /// <summary>
     /// Defines the <see cref="IsActive"/> property.
@@ -177,7 +204,92 @@ public class ManagedWindow : OverlayPopupHost
         : base(layer)
     {
         OverlayLayer = layer;
+        layer.ZIndex = 100000000;
         SetValue(KeyboardNavigation.TabNavigationProperty, KeyboardNavigationMode.Cycle);
+
+        CloseCommand = ReactiveCommand.Create(() => Close(), outputScheduler: AvaloniaScheduler.Instance);
+
+        RestoreCommand = ReactiveCommand.Create(() => { WindowState = WindowState.Normal; },
+            // canExecute: this.WhenAnyValue(win => win.WindowState).Select(state => state != WindowState.Normal),
+            outputScheduler: AvaloniaScheduler.Instance);
+
+        MaximizeCommand = ReactiveCommand.Create(() => { WindowState = WindowState.Maximized; },
+            canExecute: this.WhenAnyValue(win => win.WindowState).Select(state => state != WindowState.Maximized),
+            outputScheduler: AvaloniaScheduler.Instance);
+
+        MinimizeCommand = ReactiveCommand.Create(() => { WindowState = WindowState.Minimized; },
+            canExecute: this.WhenAnyValue(win => win.WindowState).Select(state => state != WindowState.Minimized),
+            outputScheduler: AvaloniaScheduler.Instance);
+
+        ShowSystemMenuCommand = ReactiveCommand.Create(() =>
+        {
+            _systemMenuItem.IsSubMenuOpen = true;
+
+            //// Optionally, raise a synthetic KeyDown event for Alt or F10
+            //var keyEvent = new KeyEventArgs
+            //{
+            //    RoutedEvent = InputElement.KeyDownEvent,
+            //    Key = Key.F10,
+            //    KeyModifiers = KeyModifiers.None,
+            //    Source = _systemMenuItem
+            //};
+            //_systemMenuItem.RaiseEvent(keyEvent);
+
+            // find first enabled child menu and set focus to it.
+            var firstEnabledChild = _systemMenuItem.Items
+                .OfType<MenuItem>()
+                .FirstOrDefault(mi => mi.IsEnabled);
+            firstEnabledChild?.Focus();
+
+        }, outputScheduler: AvaloniaScheduler.Instance);
+
+        MoveCommand = ReactiveCommand.Create(() =>
+        {
+            _keyboardMoving = true;
+            _keyboardSizing = false;
+            PseudoClasses.Add(":dragging");
+        },
+        canExecute: this.WhenAnyValue(win => win.WindowState).Select(state => state == WindowState.Normal),
+        outputScheduler: AvaloniaScheduler.Instance);
+
+        SizeCommand = ReactiveCommand.Create(() =>
+        {
+            if (CanResize)
+            {
+                _keyboardSizing = true;
+                _keyboardMoving = false;
+                PseudoClasses.Add(":sizing");
+            }
+            _focus?.Focus();
+        },
+        canExecute: this.WhenAnyValue(win => win.WindowState).Select(state => state == WindowState.Normal),
+        outputScheduler: AvaloniaScheduler.Instance);
+    }
+
+    public void PreviousWindow()
+    {
+        var index = s_MRU.IndexOf(this);
+        if (index > 0)
+        {
+            s_MRU[index - 1].Activate();
+        }
+        else if (s_MRU.Count > 0)
+        {
+            s_MRU.Last().Activate();
+        }
+    }
+
+    public void NextWindow()
+    {
+        var index = s_MRU.IndexOf(this);
+        if (index >= 0 && index < s_MRU.Count - 1)
+        {
+            s_MRU[index + 1].Activate();
+        }
+        else if (s_MRU.Count > 0)
+        {
+            s_MRU.First().Activate();
+        }
     }
 
     private static OverlayLayer GetOverlayLayer(Visual? visual)
@@ -543,6 +655,7 @@ public class ManagedWindow : OverlayPopupHost
             _windowBorder.Margin = new Thickness(0);
             _windowBorder.BoxShadow = new BoxShadows();
         }
+        _focus?.Focus();
     }
 
     protected virtual async void OnFullscreenWindow()
@@ -568,6 +681,7 @@ public class ManagedWindow : OverlayPopupHost
             _windowBorder.Margin = _normalMargin;
             _windowBorder.BoxShadow = _normalBoxShadow;
         }
+        _focus?.Focus();
     }
 
     protected virtual async void OnMinimizeWindow()
@@ -585,6 +699,8 @@ public class ManagedWindow : OverlayPopupHost
         this.Position = _minimizedPosition;
         this.Width = double.NaN;
         this.Height = double.NaN;
+
+        _systemMenu?.Focus();
     }
 
     /// <summary>
@@ -609,8 +725,19 @@ public class ManagedWindow : OverlayPopupHost
             BringToTop();
             SetPsuedoClasses();
 
-            // this.Focus();
+            if (_focus == null)
+            {
+                _focus = GetDefaultFocus();
+            }
+            _focus?.Focus();
         }
+    }
+
+    private Control? GetDefaultFocus()
+    {
+        return _content.GetVisualDescendants()
+               .OfType<Control>()
+               .FirstOrDefault(c => c.IsEffectivelyEnabled && c.IsVisible && c.Focusable);
     }
 
     /// <summary>
@@ -620,10 +747,23 @@ public class ManagedWindow : OverlayPopupHost
     {
         if (IsActive)
         {
+            _focus = GetCurrentFocus();
             IsActive = false;
             OnDeactivated();
             SetPsuedoClasses();
         }
+    }
+
+    private Control? GetCurrentFocus()
+    {
+        var focusManager = TopLevel.GetTopLevel(this)?.FocusManager;
+        var focusedElement = focusManager?.GetFocusedElement();
+        if (focusedElement is Control control && this.IsVisualAncestorOf(control))
+        {
+            // 'control' is the focused control within 'this'
+            return control;
+        }
+        return null;
     }
 
     public new void Show()
@@ -806,6 +946,13 @@ public class ManagedWindow : OverlayPopupHost
         OnClosed(new EventArgs());
         RaiseEvent(new RoutedEventArgs(WindowClosedEvent));
         this.Hide();
+
+        if (s_MRU == null)
+            s_MRU = GetWindows().ToList();
+
+        PreviousWindow();
+
+        s_MRU.Remove(this);
     }
 
     private bool ShouldCancelClose(WindowClosingEventArgs args)
@@ -1005,7 +1152,7 @@ public class ManagedWindow : OverlayPopupHost
     {
         base.OnApplyTemplate(e);
 
-        this.KeyDown += OnKeyDown;
+        this.AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
 
         //if (this.Theme == null)
         //    this.Theme = (ControlTheme)this.FindResource("ManagedWindow");
@@ -1020,25 +1167,40 @@ public class ManagedWindow : OverlayPopupHost
         var partMinimizeButton = e.NameScope.Find<Button>(PART_MinimizeButton);
         if (partMinimizeButton != null)
         {
-            partMinimizeButton.Click += OnMinimizeClick;
+            partMinimizeButton.Command = MinimizeCommand;
         }
 
         var partMaximizeButton = e.NameScope.Find<Button>(PART_MaximizeButton);
         if (partMaximizeButton != null)
         {
-            partMaximizeButton.Click += OnMaximizeClick;
+            partMaximizeButton.Command = MaximizeCommand;
         }
+
         var partRestoreButton = e.NameScope.Find<Button>(PART_RestoreButton);
         if (partRestoreButton != null)
         {
-            partRestoreButton.Click += OnRestoreClick;
+            partRestoreButton.Command = RestoreCommand;
         }
 
         var partCloseButton = e.NameScope.Find<Button>(PART_CloseButton);
         if (partCloseButton != null)
         {
-            partCloseButton.Click += OnCloseClick;
+            partCloseButton.Command = CloseCommand;
         }
+
+        _systemMenu = e.NameScope.Find<Menu>(PART_SystemMenu);
+        _systemMenuItem = _systemMenu.Items.OfType<MenuItem>().FirstOrDefault();
+
+
+        ArgumentNullException.ThrowIfNull(_systemMenuItem);
+        _systemMenuItem.PropertyChanged += (sender, e) =>
+        {
+            if (e.Property == MenuItem.IsSubMenuOpenProperty && !_systemMenuItem.IsSubMenuOpen)
+            {
+                // Menu is closing, restore focus
+                _focus?.Focus();
+            }
+        };
 
         _content = e.NameScope.Find<ContentPresenter>(PART_ContentPresenter);
 
@@ -1047,44 +1209,131 @@ public class ManagedWindow : OverlayPopupHost
 
         this.Tapped += OnTapped;
 
-        //switch (WindowState)
-        //{
-        //    case WindowState.FullScreen:
-        //        OnFullscreenWindow();
-        //        break;
-        //    case WindowState.Maximized:
-        //        OnMaximizeWindow();
-        //        break;
-        //    case WindowState.Minimized:
-        //        OnMinimizeWindow();
-        //        break;
-        //    case WindowState.Normal:
-        //        OnNormalWindow();
-        //        break;
-        //    default:
-        //        break;
-        //}
-
         _loaded = true;
     }
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        var buttons = this.GetVisualDescendants().OfType<Button>().ToList();
-        var defaultButton = buttons.FirstOrDefault(x => x.IsDefault);
-        var cancelButton = buttons.FirstOrDefault(x => x.IsCancel);
-        if (e.Key == Key.Escape && cancelButton != null)
+        if (_keyboardMoving || _keyboardSizing)
         {
-            cancelButton.Command?.Execute(null);
+            // TODO: Make this configurable
+            var sizing = IsConsole() ? 1 : 10;
+            switch (e.Key)
+            {
+                case Key.Left:
+                    if (_keyboardMoving)
+                    {
+                        this.Position = new PixelPoint(this.Position.X - sizing, this.Position.Y);
+                    }
+                    else if (_keyboardSizing)
+                    {
+                        if (this.Width > sizing)
+                            this.Width = this.Bounds.Width - sizing;
+                    }
+                    e.Handled = true;
+                    return;
+
+                case Key.Right:
+                    if (_keyboardMoving)
+                    {
+                        this.Position = new PixelPoint(this.Position.X + sizing, this.Position.Y);
+                    }
+                    else if (_keyboardSizing)
+                    {
+                        this.Width = this.Bounds.Width + sizing;
+                    }
+                    e.Handled = true;
+                    return;
+
+                case Key.Up:
+                    if (_keyboardMoving)
+                    {
+                        this.Position = new PixelPoint(this.Position.X, this.Position.Y - sizing);
+                    }
+                    else if (_keyboardSizing)
+                    {
+                        if (this.Height > sizing)
+                            this.Height = this.Bounds.Height - sizing;
+                    }
+                    e.Handled = true;
+                    return;
+
+                case Key.Down:
+                    if (_keyboardMoving)
+                    {
+                        this.Position = new PixelPoint(this.Position.X, this.Position.Y + sizing);
+                    }
+                    else if (_keyboardSizing)
+                    {
+                        this.Height = this.Bounds.Height + sizing;
+                    }
+                    e.Handled = true;
+                    return;
+
+                default:
+                    _keyboardMoving = false;
+                    _keyboardSizing = false;
+                    SetPsuedoClasses();
+                    e.Handled = true;
+                    return;
+            }
         }
-        else if (e.Key == Key.Enter && defaultButton != null)
+
+        if (e.Key == Key.Escape || e.Key == Key.Enter)
         {
-            defaultButton.Command?.Execute(null);
+            var buttons = this.GetVisualDescendants().OfType<Button>().ToList();
+            var defaultButton = buttons.FirstOrDefault(x => x.IsDefault);
+            var cancelButton = buttons.FirstOrDefault(x => x.IsCancel);
+            if (e.Key == Key.Escape && cancelButton != null)
+            {
+                cancelButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Enter && defaultButton != null)
+            {
+                defaultButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                e.Handled = true;
+            }
         }
-        else if (e.Key == Key.W && e.KeyModifiers == KeyModifiers.Control)
+        else if (e.Key == Key.Tab)
         {
-            Close();
+            if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+            {
+                if (s_MRU == null)
+                    s_MRU = GetWindows().ToList();
+                PreviousWindow();
+                e.Handled = true;
+                return;
+            }
+            else if (e.KeyModifiers.HasFlag(KeyModifiers.Control))
+            {
+                if (s_MRU == null)
+                    s_MRU = GetWindows().ToList();
+                NextWindow();
+                e.Handled = true;
+                return;
+            }
         }
+        else if (e.Key == Key.F6)
+        {
+            if (e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+            {
+                if (s_MRU == null)
+                    s_MRU = GetWindows().ToList();
+                PreviousWindow();
+                e.Handled = true;
+                return;
+            }
+            else
+            {
+                if (s_MRU == null)
+                    s_MRU = GetWindows().ToList();
+                NextWindow();
+                e.Handled = true;
+                return;
+            }
+        }
+        s_MRU = null;
     }
 
     private void OnTapped(object? sender, TappedEventArgs e)
@@ -1461,29 +1710,6 @@ public class ManagedWindow : OverlayPopupHost
         }
     }
 
-
-    private void OnCloseClick(object? sender, RoutedEventArgs e)
-    {
-        this.Close();
-    }
-
-
-    private void OnMinimizeClick(object? sender, RoutedEventArgs e)
-    {
-        WindowState = WindowState.Minimized;
-    }
-
-
-    private void OnMaximizeClick(object? sender, RoutedEventArgs e)
-    {
-        WindowState = WindowState.Maximized;
-    }
-
-    private void OnRestoreClick(object? sender, RoutedEventArgs e)
-    {
-        WindowState = WindowState.Normal;
-    }
-
     private void SetWindowStartupLocation()
     {
         var startupLocation = GetEffectiveWindowStartupLocation();
@@ -1556,5 +1782,18 @@ public class ManagedWindow : OverlayPopupHost
         if (OverlayLayer == null)
             return Array.Empty<ManagedWindow>();
         return OverlayLayer.Children.Where(child => child is ManagedWindow).Cast<ManagedWindow>().OrderBy(win => win.ZIndex);
+    }
+
+    public bool IsConsole()
+    {
+        if (Application.Current?.ApplicationLifetime != null)
+            return ConsoloniaAttribute.IsDefined(Application.Current.ApplicationLifetime.GetType());
+
+        if (OperatingSystem.IsWindows())
+        {
+            try { return Console.WindowHeight > 0; }
+            catch (IOException) { return false; }
+        }
+        return !(Console.IsInputRedirected && Console.IsOutputRedirected && Console.IsErrorRedirected);
     }
 }

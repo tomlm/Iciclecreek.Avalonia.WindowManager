@@ -66,3 +66,19 @@ To show a dialog is exactly the same as Avalonia, you instantiate a ManagedWindo
 ```
 
 To close a dialog you call **Close(result)**;
+
+# HotKeys
+The window manager supports hotkeys for common actions like closing a window, minimizing, maximizing, etc.
+
+|Hotkey | Action |
+|--------|--------|
+|Ctrl+F4 | Close the current window |
+|Ctrl+Tab| Activate the next window |
+|Ctrl+Shift+Tab | Activate the previous window |
+|Alt+-| Show System menu (Restore/Move/Size/Maximize/Minimize/Close)|
+|F6| Activate the next window |
+|Shift+F6| Activate the previous window |
+
+> NOTE: On windows consoles Ctrl+Tab and Ctrl+Shift+Tab are handled by the console window, so F6 and Shift+F6 should be used instead.
+
+

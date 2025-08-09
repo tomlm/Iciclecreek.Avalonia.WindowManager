@@ -6,7 +6,7 @@
                        xmlns:vm="using:Demo.ViewModels"
                        x:Class="Demo.Views.MainView"
                        x:DataType="vm:MainViewModel">
-  <StackPanel Background="AliceBlue" Spacing="1">
+  <StackPanel Spacing="1">
     <StackPanel Orientation="Horizontal" Spacing="1">
       <Label>SizeToContent for new Window</Label>
       <ComboBox Name="SizeToContentCombo" SelectedIndex="3">
@@ -38,7 +38,7 @@
     
     <StackPanel Orientation="Horizontal" >
       <Button HorizontalAlignment="Left" Click="OnClick" Content="Increment"/>
-      <TextBlock Text="Counter:" />
+      <TextBlock Text="Counter:"  VerticalAlignment="Center" />
       <TextBlock Text="{Binding Counter}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
     </StackPanel>
   </StackPanel>

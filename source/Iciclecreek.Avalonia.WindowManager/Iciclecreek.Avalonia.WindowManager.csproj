@@ -6,8 +6,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>2.0.7</Version>
-    <AssemblyVersion>2.0.7.0</AssemblyVersion>
+    <Version>2.1.0</Version>
+    <AssemblyVersion>2.1.0.0</AssemblyVersion>
     <Description>This library implements a window manager for Avalonia with windows defined using Avalonia instead of native windows.</Description>
     <Company>Iciclecreek</Company>
     <Authors>Tom Laird-McConnell</Authors>
@@ -36,6 +36,7 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.2.5" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="11.2.5" />
     <PackageReference Include="Consolonia.Controls" Version="11.2.5-beta.*" />
     <PackageReference Include="IconPacks.Avalonia.Codicons" Version="1.0.0" />
   </ItemGroup>
