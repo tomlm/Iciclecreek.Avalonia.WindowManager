@@ -16,6 +16,5 @@
 
   <Application.Styles>
     <FluentTheme />
-    <wm:WindowManagerTheme/>
   </Application.Styles>
 </Application>

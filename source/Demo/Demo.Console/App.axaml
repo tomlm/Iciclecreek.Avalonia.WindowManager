@@ -42,7 +42,6 @@
   </Application.Resources>
 
   <Application.Styles>
-    <wm:WindowManagerTheme />
     <console:FluentTheme />
   </Application.Styles>
 </Application>

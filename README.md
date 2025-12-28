@@ -9,24 +9,6 @@ To install you need to add a reference to the nuget package **Iciclecreek.Avalon
 
 ```dotnet add package Iciclecreek.Avalonia.WindowManager```
 
-The window manager comes with a Light and Dark theme which you need to install into your app.xaml.
-To do that you need to:
-* Add **Iciclecreek.Avalonia.WindowManager** namespace  ```xmlns:wm="using:Iciclecreek.Avalonia.WindowManager"```
-* Add **WindowManagerTheme** 
-
-App.axaml
-```
-<Application xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:wm="using:Iciclecreek.Avalonia.WindowManager"
-             x:Class="Demo.App"
-             RequestedThemeVariant="Default">
-  <Application.Styles>
-    <wm:WindowManagerTheme/>
-  </Application.Styles>
-</Application>
-```
-
 # Usage
 This library defines two controls:
 * **WindowsPanel** - a panel which hosts windows

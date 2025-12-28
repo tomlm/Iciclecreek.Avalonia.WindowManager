@@ -3,7 +3,9 @@ using Avalonia.Controls;
 using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
+using Avalonia.Styling;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Iciclecreek.Avalonia.WindowManager
@@ -28,6 +30,19 @@ namespace Iciclecreek.Avalonia.WindowManager
         private Panel _modalOverlay;
         private ContentPresenter _contentPresenter;
         private ManagedWindow? _modalDialog;
+
+        static WindowsPanel()
+        {
+            // Automatically register the WindowManagerTheme if not already present
+            if (Application.Current?.Styles != null)
+            {
+                var hasTheme = Application.Current.Styles.OfType<WindowManagerTheme>().Any();
+                if (!hasTheme)
+                {
+                    Application.Current.Styles.Add(new WindowManagerTheme());
+                }
+            }
+        }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
         public WindowsPanel()
