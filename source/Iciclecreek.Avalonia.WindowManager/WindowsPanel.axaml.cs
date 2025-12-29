@@ -25,7 +25,6 @@ namespace Iciclecreek.Avalonia.WindowManager
         public const string PART_ContentPresenter = "PART_ContentPresenter";
         private const string CLASS_HasModal = ":hasmodal";
 
-
         private Canvas _canvas;
         private Panel _modalOverlay;
         private ContentPresenter _contentPresenter;
@@ -33,13 +32,13 @@ namespace Iciclecreek.Avalonia.WindowManager
 
         static WindowsPanel()
         {
-            // Automatically register the WindowManagerTheme if not already present
-            if (Application.Current?.Styles != null)
+            // Ensure WindowManagerTheme is registered
+            if (Application.Current != null)
             {
                 var hasTheme = Application.Current.Styles.OfType<WindowManagerTheme>().Any();
                 if (!hasTheme)
                 {
-                    Application.Current.Styles.Add(new WindowManagerTheme());
+                    Application.Current.Styles.Insert(0, new WindowManagerTheme());
                 }
             }
         }
@@ -48,8 +47,21 @@ namespace Iciclecreek.Avalonia.WindowManager
         public WindowsPanel()
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
         {
+            // Ensure Theme is set before any template application
+            EnsureTheme();
         }
 
+        private void EnsureTheme()
+        {
+            if (Theme == null && Application.Current != null)
+            {
+                // Try to find the ControlTheme in Application resources
+                if (Application.Current.TryFindResource(typeof(WindowsPanel), null, out var theme) && theme is ControlTheme controlTheme)
+                {
+                    Theme = controlTheme;
+                }
+            }
+        }
 
         public ManagedWindow? ModalDialog
         {

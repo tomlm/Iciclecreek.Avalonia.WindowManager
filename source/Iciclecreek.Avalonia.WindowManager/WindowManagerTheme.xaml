@@ -109,7 +109,12 @@
 
   <!-- set default style for the ManagedWindow type -->
   <Style Selector=":is(wm|ManagedWindow)">
-    <Setter Property="Theme" Value="{StaticResource {x:Type wm:ManagedWindow}}"/>
+    <Setter Property="Theme" Value="{DynamicResource {x:Type wm:ManagedWindow}}"/>
+  </Style>
+
+  <!-- set default style for the WindowsPanel type -->
+  <Style Selector=":is(wm|WindowsPanel)">
+    <Setter Property="Theme" Value="{DynamicResource {x:Type wm:WindowsPanel}}"/>
   </Style>
 
   <StyleInclude Source="avares://IconPacks.Avalonia.Codicons/Codicons.axaml" />
