@@ -20,6 +20,7 @@ using Avalonia.VisualTree;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
@@ -79,6 +80,7 @@ public class ManagedWindow : ContentControl
 
     // used to track MRU windows globally
     private static List<ManagedWindow> s_MRU = null;
+    private static bool s_isAnyWindowActivating = false;  // Global guard against activation loops
 
     private PixelPoint _minimizedPosition = new PixelPoint(int.MinValue, int.MinValue);
     private Rect _normalRect;
@@ -100,6 +102,7 @@ public class ManagedWindow : ContentControl
     private bool _keyboardSizing;
     private ManagedWindow? _modalDialog;
     private readonly List<(ManagedWindow Child, bool IsDialog)> _children = new List<(ManagedWindow, bool)>();
+    private bool _isActivating;  // Guard against re-entrant activation
 
     public ReactiveCommand<Unit, Unit> CloseCommand { get; }
     public ReactiveCommand<Unit, Unit> RestoreCommand { get; }
@@ -211,8 +214,9 @@ public class ManagedWindow : ContentControl
         AffectsMeasure<ManagedWindow>(
             SystemDecorationsProperty,
             WindowStateProperty);
-        //var theme = new ManagedWindowControlTheme() { TargetType = typeof(ManagedWindow) };
-        //Control.ThemeProperty.OverrideDefaultValue<ManagedWindow>(theme);
+        
+        // ManagedWindow should be focusable to properly receive keyboard input
+        FocusableProperty.OverrideDefaultValue<ManagedWindow>(true);
     }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
@@ -255,7 +259,7 @@ public class ManagedWindow : ContentControl
             {
                 _keyboardMoving = true;
                 _keyboardSizing = false;
-                this.SetPsuedoClasses();
+                this.SetPsudoClasses();
             },
             canExecute: this.WhenAnyValue(win => win.WindowState).Select(state => state == WindowState.Normal),
             outputScheduler: AvaloniaScheduler.Instance);
@@ -266,7 +270,7 @@ public class ManagedWindow : ContentControl
                 {
                     _keyboardSizing = true;
                     _keyboardMoving = false;
-                    this.SetPsuedoClasses();
+                    this.SetPsudoClasses();
                 }
                 _focus?.Focus();
             },
@@ -300,7 +304,17 @@ public class ManagedWindow : ContentControl
 
     private void OnGetFocus(object? sender, GotFocusEventArgs e)
     {
+        Debug.WriteLine($"[ManagedWindow '{Title}'] OnGetFocus: Source={e.Source?.GetType().Name}, IsActive={IsActive}, _isActivating={_isActivating}, s_isAnyWindowActivating={s_isAnyWindowActivating}");
+        
         _focus = (Control)e.Source;
+        
+        // Ensure this window is active when any of its descendants receive focus
+        // Guard against re-entrant activation which can cause infinite loops
+        if (!IsActive && !_isActivating && !s_isAnyWindowActivating && e.Source != this)
+        {
+            Debug.WriteLine($"[ManagedWindow '{Title}'] Activating window due to focus on {e.Source?.GetType().Name}");
+            Activate();
+        }
     }
 
     public void PreviousWindow()
@@ -535,13 +549,13 @@ public class ManagedWindow : ContentControl
                 throw new NotSupportedException("Already showing a modal dialog for this window");
 
             _modalDialog = value;
-            SetPsuedoClasses();
+            SetPsudoClasses();
             if (_modalDialog != null)
             {
                 _modalDialog.Closed += (s, e) =>
                 {
                     _modalDialog = null;
-                    SetPsuedoClasses();
+                    SetPsudoClasses();
                 };
             }
 
@@ -629,7 +643,7 @@ public class ManagedWindow : ContentControl
                 break;
 
             case nameof(SystemDecorations):
-                SetPsuedoClasses();
+                SetPsudoClasses();
                 break;
 
             default:
@@ -676,7 +690,7 @@ public class ManagedWindow : ContentControl
     {
         BringToTop();
 
-        SetPsuedoClasses();
+        SetPsudoClasses();
 
         await ResizeAnimation(new Rect(this.Position.X, this.Position.Y, this.Bounds.Width, this.Bounds.Height),
                               new Rect(0, 0, WindowsPanel.Bounds.Width, WindowsPanel.Bounds.Height));
@@ -702,7 +716,7 @@ public class ManagedWindow : ContentControl
     {
         BringToTop();
 
-        SetPsuedoClasses();
+        SetPsudoClasses();
 
         await ResizeAnimation(new Rect(this.Position.X, this.Position.Y, this.Bounds.Width, this.Bounds.Height),
                               _normalRect);
@@ -723,7 +737,7 @@ public class ManagedWindow : ContentControl
     {
         BringToTop();
 
-        SetPsuedoClasses();
+        SetPsudoClasses();
 
         if (_minimizedPosition.X == int.MinValue && _minimizedPosition.Y == int.MinValue)
             _minimizedPosition = new PixelPoint(this.Position.X, this.Position.Y);
@@ -743,6 +757,13 @@ public class ManagedWindow : ContentControl
     /// </summary>
     public void Activate()
     {
+        // Guard against re-entrant activation (both local and global)
+        if (_isActivating || s_isAnyWindowActivating)
+        {
+            Debug.WriteLine($"[ManagedWindow '{Title}'] Activate: Already activating (local={_isActivating}, global={s_isAnyWindowActivating}), skipping");
+            return;
+        }
+        
         if (!IsActive && ModalDialog == null && Parent != null)
         {
             if (WindowState == WindowState.Minimized)
@@ -750,21 +771,68 @@ public class ManagedWindow : ContentControl
                 return;
             }
 
-            OnActivated();
-            IsActive = true;
-
-            foreach (var win in GetWindows().Where(win => win != this))
+            _isActivating = true;
+            s_isAnyWindowActivating = true;
+            try
             {
-                win.Deactivate();
-            }
-            BringToTop();
-            SetPsuedoClasses();
+                OnActivated();
+                IsActive = true;
 
-            if (_focus != null)
-                _focus.Focus();
+                foreach (var win in GetWindows().Where(win => win != this))
+                {
+                    win.Deactivate();
+                }
+                BringToTop();
+                SetPsudoClasses();
+
+                // Focus content synchronously to avoid deferred focus issues
+                FocusContentInternal();
+            }
+            finally
+            {
+                _isActivating = false;
+                s_isAnyWindowActivating = false;
+            }
         }
     }
 
+    /// <summary>
+    /// Focuses the window's content synchronously (internal implementation).
+    /// </summary>
+    private void FocusContentInternal()
+    {
+        Debug.WriteLine($"[ManagedWindow '{Title}'] FocusContentInternal: _focus={_focus?.GetType().Name}");
+        
+        if (_focus != null && _focus.IsVisible && _focus.IsEnabled)
+        {
+            Debug.WriteLine($"[ManagedWindow '{Title}'] Focusing: {_focus.GetType().Name}");
+            _focus.Focus();
+            return;
+        }
+
+        if (_content != null)
+        {
+            var focusable = _content.GetVisualDescendants()
+                .OfType<Control>()
+                .FirstOrDefault(c => c.Focusable && c.IsVisible && c.IsEnabled);
+            
+            if (focusable != null)
+            {
+                Debug.WriteLine($"[ManagedWindow '{Title}'] Focusing first: {focusable.GetType().Name}");
+                _focus = focusable;
+                focusable.Focus();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Focuses the window's content. If a previously focused control exists, it will be focused.
+    /// Otherwise, finds the first focusable control in the content area.
+    /// </summary>
+    public void FocusContent()
+    {
+        FocusContentInternal();
+    }
 
     /// <summary>
     /// Deactivates the window
@@ -775,7 +843,7 @@ public class ManagedWindow : ContentControl
         {
             IsActive = false;
             OnDeactivated();
-            SetPsuedoClasses();
+            SetPsudoClasses();
         }
     }
 
@@ -935,9 +1003,9 @@ public class ManagedWindow : ContentControl
                 this.WindowsPanel.ModalDialog = null;
             }
 
-            result.SetResult((TResult)(_dialogResult ?? default(TResult)!));
+            result.SetResult((TResult)(_dialogResult ?? default(TResult))!);
         };
-        SetPsuedoClasses();
+        SetPsudoClasses();
         return result.Task;
     }
 
@@ -1275,6 +1343,8 @@ public class ManagedWindow : ContentControl
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
+        Debug.WriteLine($"[ManagedWindow '{Title}'] OnKeyDown: Key={e.Key}, Source={e.Source?.GetType().Name}, IsActive={IsActive}");
+        
         if (_keyboardMoving || _keyboardSizing)
         {
             // TODO: Make this configurable
@@ -1334,7 +1404,7 @@ public class ManagedWindow : ContentControl
                 default:
                     _keyboardMoving = false;
                     _keyboardSizing = false;
-                    SetPsuedoClasses();
+                    SetPsudoClasses();
                     e.Handled = true;
                     return;
             }
@@ -1411,7 +1481,7 @@ public class ManagedWindow : ContentControl
                 {
                     var point = e.GetPosition(parent);
                     start = new PixelPoint((int)point.X, (int)point.Y);
-                    SetPsuedoClasses(true);
+                    SetPsudoClasses(true);
                 }
             }
 
@@ -1427,7 +1497,7 @@ public class ManagedWindow : ContentControl
             {
                 if (e.InitialPressMouseButton == MouseButton.Left)
                 {
-                    SetPsuedoClasses(false);
+                    SetPsudoClasses(false);
                     start = null;
                     e.Handled = true;
                 }
@@ -1455,7 +1525,7 @@ public class ManagedWindow : ContentControl
 
         partTitleBar.PointerCaptureLost += (object? sender, PointerCaptureLostEventArgs e) =>
         {
-            SetPsuedoClasses(false);
+            SetPsudoClasses(false);
             if (start != null)
                 e.Handled = true;
 
@@ -1465,7 +1535,7 @@ public class ManagedWindow : ContentControl
         partTitleBar.DoubleTapped += OnTitleBarDoubleClick;
     }
 
-    private void SetPsuedoClasses(bool isDragging = false)
+    private void SetPsudoClasses(bool isDragging = false)
     {
         var classes = ((IPseudoClasses)this.Classes);
         classes.Remove(CLASS_Minimized);
@@ -1842,7 +1912,7 @@ public class ManagedWindow : ContentControl
     {
         _keyboardSizing = false;
         _keyboardMoving = false;
-        SetPsuedoClasses();
+        SetPsudoClasses();
     }
 
 }

@@ -3,8 +3,13 @@ using Avalonia.Controls;
 using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Styling;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -41,6 +46,9 @@ namespace Iciclecreek.Avalonia.WindowManager
                     Application.Current.Styles.Insert(0, new WindowManagerTheme());
                 }
             }
+
+            // WindowsPanel should be focusable to act as a focus scope
+            FocusableProperty.OverrideDefaultValue<WindowsPanel>(true);
         }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
@@ -49,6 +57,9 @@ namespace Iciclecreek.Avalonia.WindowManager
         {
             // Ensure Theme is set before any template application
             EnsureTheme();
+            
+            // Set keyboard navigation mode to ensure focus stays within panel
+            KeyboardNavigation.SetTabNavigation(this, KeyboardNavigationMode.Cycle);
         }
 
         private void EnsureTheme()
@@ -93,6 +104,114 @@ namespace Iciclecreek.Avalonia.WindowManager
             _canvas = e.NameScope.Find<Canvas>(PART_Windows) ?? throw new ArgumentNullException(PART_Windows);
             _modalOverlay = e.NameScope.Find<Panel>(PART_ModalOverlay) ?? throw new ArgumentNullException(PART_ModalOverlay);
             _contentPresenter = e.NameScope.Find<ContentPresenter>(PART_ContentPresenter) ?? throw new ArgumentNullException(PART_ContentPresenter);
+
+            // Subscribe to focus events on the canvas to track focus changes
+            _canvas.AddHandler(GotFocusEvent, OnCanvasGotFocus, RoutingStrategies.Bubble);
+            
+            // Add keyboard event handlers for diagnostics
+            _canvas.AddHandler(KeyDownEvent, OnCanvasKeyDown, RoutingStrategies.Tunnel);
+        }
+
+        /// <summary>
+        /// Diagnostic handler to track keyboard events in the canvas.
+        /// </summary>
+        private void OnCanvasKeyDown(object? sender, KeyEventArgs e)
+        {
+            var focusManager = TopLevel.GetTopLevel(this)?.FocusManager;
+            var focusedElement = focusManager?.GetFocusedElement();
+            
+            Debug.WriteLine($"[WindowsPanel] KeyDown: Key={e.Key}, Source={e.Source?.GetType().Name}, FocusedElement={focusedElement?.GetType().Name}");
+            
+            // Find which ManagedWindow contains the focused element
+            if (focusedElement is Control focusedControl)
+            {
+                var window = focusedControl.FindAncestorOfType<ManagedWindow>();
+                Debug.WriteLine($"[WindowsPanel] FocusedControl is in window: {window?.Title ?? "null"}, IsActive={window?.IsActive}");
+            }
+            
+            // Log all windows and their active state
+            foreach (var win in _canvas.Children.OfType<ManagedWindow>())
+            {
+                Debug.WriteLine($"[WindowsPanel]   Window '{win.Title}': IsActive={win.IsActive}, ZIndex={win.ZIndex}");
+            }
+        }
+
+        /// <summary>
+        /// Handles focus events bubbling up from windows in the canvas.
+        /// Note: Window activation based on focus is handled by ManagedWindow.OnGetFocus.
+        /// This handler is kept for potential future use but does not activate windows
+        /// to avoid duplicate activation which can cause focus loops.
+        /// </summary>
+        private void OnCanvasGotFocus(object? sender, GotFocusEventArgs e)
+        {
+            // Window activation is handled by ManagedWindow.OnGetFocus
+            // Do not activate here to avoid duplicate activation and focus loops
+            Debug.WriteLine($"[WindowsPanel] OnCanvasGotFocus: Source={e.Source?.GetType().Name}");
+        }
+
+        /// <summary>
+        /// Gets the currently active window, or null if no window is active.
+        /// </summary>
+        public ManagedWindow? ActiveWindow
+        {
+            get
+            {
+                if (_canvas == null)
+                    return null;
+                return _canvas.Children
+                    .OfType<ManagedWindow>()
+                    .FirstOrDefault(w => w.IsActive);
+            }
+        }
+
+        /// <summary>
+        /// Ensures there is an active window. If no window is active, activates the topmost one.
+        /// </summary>
+        public void EnsureActiveWindow()
+        {
+            if (_canvas == null)
+                return;
+
+            var activeWindow = ActiveWindow;
+            if (activeWindow == null)
+            {
+                // Find the topmost non-minimized window and activate it
+                var topWindow = _canvas.Children
+                    .OfType<ManagedWindow>()
+                    .Where(w => w.WindowState != WindowState.Minimized)
+                    .OrderByDescending(w => w.ZIndex)
+                    .FirstOrDefault();
+                
+                topWindow?.Activate();
+            }
+        }
+
+        protected override void OnGotFocus(GotFocusEventArgs e)
+        {
+            base.OnGotFocus(e);
+            
+            Debug.WriteLine($"[WindowsPanel] OnGotFocus: Source={e.Source?.GetType().Name}");
+
+            // If the WindowsPanel itself got focus (not a child), redirect to active window
+            if (e.Source == this)
+            {
+                Debug.WriteLine($"[WindowsPanel] Panel itself got focus, redirecting to active window");
+                Dispatcher.UIThread.Post(() =>
+                {
+                    EnsureActiveWindow();
+                    var activeWindow = ActiveWindow;
+                    if (activeWindow != null)
+                    {
+                        Debug.WriteLine($"[WindowsPanel] Focusing content of '{activeWindow.Title}'");
+                        // Focus the active window's content
+                        activeWindow.FocusContent();
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"[WindowsPanel] No active window to focus");
+                    }
+                }, DispatcherPriority.Input);
+            }
         }
 
         /// <summary>
