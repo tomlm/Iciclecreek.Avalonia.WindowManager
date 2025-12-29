@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>3.0.12</Version>
-    <AssemblyVersion>3.0.12.0</AssemblyVersion>
+    <Version>3.0.13</Version>
+    <AssemblyVersion>3.0.13.0</AssemblyVersion>
     <Description>This library implements a window manager for Avalonia with windows defined using Avalonia instead of native windows.</Description>
     <Company>Iciclecreek</Company>
     <Authors>Tom Laird-McConnell</Authors>
