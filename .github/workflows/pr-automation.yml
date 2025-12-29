@@ -62,12 +62,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const prNumber = context.payload.pull_request.number;
-            const { data: files } = await github.rest.pulls.listFiles({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: prNumber
-            });
-            
             const additions = context.payload.pull_request.additions;
             const deletions = context.payload.pull_request.deletions;
             const totalChanges = additions + deletions;
@@ -83,4 +77,16 @@ jobs:
               sizeLabel = 'size/S';
             }
             
-            console.log(`PR has ${additions} additions and ${deletions} deletions (${totalChanges} total). Label: ${sizeLabel}`);
+            console.log(`PR has ${additions} additions and ${deletions} deletions (${totalChanges} total). Adding label: ${sizeLabel}`);
+            
+            // Add the size label to the PR
+            try {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                labels: [sizeLabel]
+              });
+            } catch (error) {
+              console.log(`Note: Could not add label ${sizeLabel}. The label may need to be created first.`);
+            }
