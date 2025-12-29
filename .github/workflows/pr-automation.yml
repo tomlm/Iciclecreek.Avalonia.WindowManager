@@ -22,7 +22,6 @@ jobs:
 
       - name: PR Labeler
         uses: actions/labeler@v5
-        if: github.event.action == 'opened'
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -79,7 +78,25 @@ jobs:
             
             console.log(`PR has ${additions} additions and ${deletions} deletions (${totalChanges} total). Adding label: ${sizeLabel}`);
             
-            // Add the size label to the PR
+            // Remove existing size labels first
+            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+            
+            for (const label of labels) {
+              if (label.name.startsWith('size/')) {
+                await github.rest.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  name: label.name
+                });
+              }
+            }
+            
+            // Add the new size label to the PR
             try {
               await github.rest.issues.addLabels({
                 owner: context.repo.owner,

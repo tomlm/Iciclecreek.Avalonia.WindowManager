@@ -2,7 +2,7 @@
 # This file is used by the actions/labeler action
 
 # Source code changes
-'source code':
+'source-code':
   - changed-files:
     - any-glob-to-any-file: 'source/**/*'
 

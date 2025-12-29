@@ -32,7 +32,7 @@ Repository settings file that can be used with:
 Configuration for automatic PR labeling based on changed files.
 
 **Labels Applied:**
-- `source code` - Changes to source code
+- `source-code` - Changes to source code
 - `documentation` - Changes to documentation
 - `github-actions` - Changes to workflows
 - `tests` - Changes to test files

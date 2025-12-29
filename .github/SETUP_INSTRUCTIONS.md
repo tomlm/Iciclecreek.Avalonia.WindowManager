@@ -17,7 +17,9 @@ The following settings MUST be configured manually by a repository administrator
 
 ### Step 1: Enable Branch Protection for `main`
 
-1. Navigate to: https://github.com/tomlm/Iciclecreek.Avalonia.WindowManager/settings/branches
+1. Navigate to: `https://github.com/<OWNER>/<REPO>/settings/branches`
+   - Replace `<OWNER>` with the repository owner (e.g., `tomlm`)
+   - Replace `<REPO>` with the repository name (e.g., `Iciclecreek.Avalonia.WindowManager`)
 2. Click **"Add branch protection rule"** (or **"Edit"** if one exists)
 3. Configure the following:
 
@@ -49,7 +51,9 @@ The following settings MUST be configured manually by a repository administrator
 
 If you have **GitHub Copilot Enterprise**:
 
-1. Navigate to: https://github.com/tomlm/Iciclecreek.Avalonia.WindowManager/settings/copilot
+1. Navigate to: `https://github.com/<OWNER>/<REPO>/settings/copilot`
+   - Replace `<OWNER>` with the repository owner
+   - Replace `<REPO>` with the repository name
 2. Enable available Copilot features:
    - ✅ **Copilot Pull Request Summaries**
    - ✅ **Copilot in comments**
@@ -63,7 +67,9 @@ If you have **GitHub Copilot Business/Individual**:
 
 The repository should have standard labels. To add them:
 
-1. Navigate to: https://github.com/tomlm/Iciclecreek.Avalonia.WindowManager/labels
+1. Navigate to: `https://github.com/<OWNER>/<REPO>/labels`
+   - Replace `<OWNER>` with the repository owner
+   - Replace `<REPO>` with the repository name
 2. Create these labels if they don't exist:
    - `size/XS` (color: 009900) - Extra small PR
    - `size/S` (color: 77bb00) - Small PR
@@ -71,7 +77,7 @@ The repository should have standard labels. To add them:
    - `size/L` (color: ff9900) - Large PR
    - `size/XL` (color: ee0000) - Extra large PR
    - `documentation` (color: 0075ca)
-   - `source code` (color: default)
+   - `source-code` (color: default)
    - `github-actions` (color: default)
    - `tests` (color: default)
 
