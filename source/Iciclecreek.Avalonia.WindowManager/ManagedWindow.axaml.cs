@@ -276,7 +276,9 @@ public class ManagedWindow : ContentControl
             },
             canExecute: this.WhenAnyValue(win => win.CanResize, win => win.WindowState, (canResize, windowState) => canResize && windowState == WindowState.Normal),
             outputScheduler: AvaloniaScheduler.Instance);
-        this.GotFocus += OnGetFocus;
+        
+        // Don't subscribe to GotFocus here - it causes infinite loops
+        // Window activation is handled through PointerPressed events instead
     }
 
     protected override void OnLoaded(RoutedEventArgs e)
@@ -299,21 +301,6 @@ public class ManagedWindow : ContentControl
         {
             Width = WindowsPanel.Bounds.Width;
             Height = WindowsPanel.Bounds.Height;
-        }
-    }
-
-    private void OnGetFocus(object? sender, GotFocusEventArgs e)
-    {
-        Debug.WriteLine($"[ManagedWindow '{Title}'] OnGetFocus: Source={e.Source?.GetType().Name}, IsActive={IsActive}, _isActivating={_isActivating}, s_isAnyWindowActivating={s_isAnyWindowActivating}");
-        
-        _focus = (Control)e.Source;
-        
-        // Ensure this window is active when any of its descendants receive focus
-        // Guard against re-entrant activation which can cause infinite loops
-        if (!IsActive && !_isActivating && !s_isAnyWindowActivating && e.Source != this)
-        {
-            Debug.WriteLine($"[ManagedWindow '{Title}'] Activating window due to focus on {e.Source?.GetType().Name}");
-            Activate();
         }
     }
 
@@ -775,18 +762,23 @@ public class ManagedWindow : ContentControl
             s_isAnyWindowActivating = true;
             try
             {
-                OnActivated();
+                // Set IsActive FIRST before any focus operations
                 IsActive = true;
-
+                
                 foreach (var win in GetWindows().Where(win => win != this))
                 {
                     win.Deactivate();
                 }
                 BringToTop();
                 SetPsudoClasses();
+                
+                OnActivated();
 
-                // Focus content synchronously to avoid deferred focus issues
-                FocusContentInternal();
+                // Don't focus content here - it causes focus loops
+                // Focus will be handled by:
+                // 1. The control that was clicked (if activation was from a click)
+                // 2. OnLoaded for new windows
+                // 3. Manual calls to FocusContent when needed
             }
             finally
             {
@@ -1274,6 +1266,9 @@ public class ManagedWindow : ContentControl
         base.OnApplyTemplate(e);
 
         this.AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
+        
+        // Handle pointer pressed to activate window when clicked anywhere
+        this.AddHandler(PointerPressedEvent, OnWindowPointerPressed, RoutingStrategies.Tunnel);
 
         //if (this.Theme == null)
         //    this.Theme = (ControlTheme)this.FindResource("ManagedWindow");
@@ -1458,6 +1453,19 @@ public class ManagedWindow : ContentControl
     private void OnTapped(object? sender, TappedEventArgs e)
     {
         if (!IsActive)
+        {
+            Activate();
+        }
+    }
+
+    /// <summary>
+    /// Handles pointer pressed on the window to activate it.
+    /// This is used instead of GotFocus to avoid focus loops.
+    /// </summary>
+    private void OnWindowPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        Debug.WriteLine($"[ManagedWindow '{Title}'] OnWindowPointerPressed: IsActive={IsActive}");
+        if (!IsActive && !s_isAnyWindowActivating)
         {
             Activate();
         }
