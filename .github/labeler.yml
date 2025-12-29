@@ -1,0 +1,46 @@
+# Labeler configuration for automatic PR labeling
+# This file is used by the actions/labeler action
+
+# Source code changes
+'source-code':
+  - changed-files:
+    - any-glob-to-any-file: 'source/**/*'
+
+# Documentation changes
+'documentation':
+  - changed-files:
+    - any-glob-to-any-file: 
+      - '**/*.md'
+      - 'docs/**/*'
+
+# GitHub Actions / CI changes
+'github-actions':
+  - changed-files:
+    - any-glob-to-any-file: '.github/workflows/**/*'
+
+# Configuration changes
+'configuration':
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*.yml'
+      - '**/*.yaml'
+      - '**/*.json'
+      - '**/*.config'
+      - '.github/**/*'
+
+# Test changes
+'tests':
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*Test*.cs'
+      - '**/*Tests*.cs'
+      - '**/test/**/*'
+      - '**/tests/**/*'
+
+# Dependencies
+'dependencies':
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*.csproj'
+      - '**/packages.lock.json'
+      - '**/Directory.Build.props'

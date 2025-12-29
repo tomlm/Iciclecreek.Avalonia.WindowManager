@@ -1,0 +1,9 @@
+# CODEOWNERS file for automatic review assignments
+# This file specifies individuals or teams that are automatically requested for review
+# when someone opens a pull request that modifies code in the repository.
+
+# Global owner - will be requested to review all PRs
+* @tomlm
+
+# Source code changes
+/source/** @tomlm

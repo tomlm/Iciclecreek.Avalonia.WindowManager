@@ -1,0 +1,127 @@
+# Repository settings file
+# This file can be used with the GitHub Settings app (Probot)
+# or as documentation for manual configuration
+# Reference: https://github.com/repository-settings/app
+
+repository:
+  # Repository name, description, and other metadata
+  name: Iciclecreek.Avalonia.WindowManager
+  description: A window manager for Avalonia with windows defined using Avalonia instead of native windows
+  homepage: https://github.com/tomlm/Iciclecreek.Avalonia.WindowManager
+  topics:
+    - avalonia
+    - window-manager
+    - ui
+    - dotnet
+  
+  # Repository settings
+  private: false
+  has_issues: true
+  has_projects: true
+  has_wiki: false
+  has_downloads: true
+  
+  # Pull request settings
+  allow_squash_merge: true
+  allow_merge_commit: true
+  allow_rebase_merge: true
+  delete_branch_on_merge: true
+  
+  # Security and analysis
+  enable_automated_security_fixes: true
+  enable_vulnerability_alerts: true
+
+# Branch protection rules
+branches:
+  - name: main
+    protection:
+      # Require pull request reviews before merging
+      required_pull_request_reviews:
+        required_approving_review_count: 1
+        dismiss_stale_reviews: true
+        require_code_owner_reviews: true
+        require_last_push_approval: false
+      
+      # Require status checks to pass before merging
+      required_status_checks:
+        strict: true
+        contexts:
+          - build
+      
+      # Additional restrictions
+      enforce_admins: false  # Admins can bypass protections
+      required_linear_history: false
+      allow_force_pushes: false
+      allow_deletions: false
+      required_conversation_resolution: true
+      
+      # Restrictions (optional)
+      # restrictions:
+      #   users: []
+      #   teams: []
+      #   apps: []
+
+# Collaborators and teams
+# collaborators: []
+# teams: []
+
+# Labels for issues and PRs
+labels:
+  - name: bug
+    color: d73a4a
+    description: Something isn't working
+    
+  - name: enhancement
+    color: a2eeef
+    description: New feature or request
+    
+  - name: documentation
+    color: 0075ca
+    description: Improvements or additions to documentation
+    
+  - name: good first issue
+    color: 7057ff
+    description: Good for newcomers
+    
+  - name: help wanted
+    color: 008672
+    description: Extra attention is needed
+    
+  - name: question
+    color: d876e3
+    description: Further information is requested
+    
+  - name: wontfix
+    color: ffffff
+    description: This will not be worked on
+    
+  - name: duplicate
+    color: cfd3d7
+    description: This issue or pull request already exists
+    
+  - name: dependencies
+    color: 0366d6
+    description: Pull requests that update a dependency file
+    
+  - name: size/XS
+    color: '009900'
+    description: Extra small PR (< 30 lines changed)
+    
+  - name: size/S
+    color: '77bb00'
+    description: Small PR (30-100 lines changed)
+    
+  - name: size/M
+    color: 'eeee00'
+    description: Medium PR (100-200 lines changed)
+    
+  - name: size/L
+    color: 'ff9900'
+    description: Large PR (200-500 lines changed)
+    
+  - name: size/XL
+    color: 'ee0000'
+    description: Extra large PR (> 500 lines changed)
+
+# Milestones
+# milestones: []
