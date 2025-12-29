@@ -1,4 +1,9 @@
 # Iciclecreek.Avalonia.WindowManager
+
+[![NuGet Version](https://img.shields.io/nuget/v/Iciclecreek.Avalonia.WindowManager.svg)](https://www.nuget.org/packages/Iciclecreek.Avalonia.WindowManager/)
+[![Build Status](https://github.com/tomlm/Iciclecreek.Avalonia.WindowManager/actions/workflows/BuildAndRunTests.yml/badge.svg)](https://github.com/tomlm/Iciclecreek.Avalonia.WindowManager/actions/workflows/BuildAndRunTests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 This library implements a window manager for Avalonia with windows defined using Avalonia instead of native windows.
 This gives you the ability to create MDI style user interfaces in Avalonia, even in environments which don't support windowing like Android and iOS.
 
