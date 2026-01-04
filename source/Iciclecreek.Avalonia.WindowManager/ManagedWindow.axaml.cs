@@ -306,6 +306,9 @@ public class ManagedWindow : ContentControl
 
     public void PreviousWindow()
     {
+        if (s_MRU == null)
+            s_MRU = GetWindows().ToList();
+
         var index = s_MRU.IndexOf(this);
         if (index > 0)
         {
@@ -319,6 +322,9 @@ public class ManagedWindow : ContentControl
 
     public void NextWindow()
     {
+        if (s_MRU == null)
+            s_MRU = GetWindows().ToList();
+
         var index = s_MRU.IndexOf(this);
         if (index >= 0 && index < s_MRU.Count - 1)
         {
@@ -1060,8 +1066,6 @@ public class ManagedWindow : ContentControl
         RaiseEvent(new RoutedEventArgs(WindowClosedEvent));
 
         this.WindowsPanel.Windows.Remove(this);
-        if (s_MRU == null)
-            s_MRU = GetWindows().ToList();
 
         PreviousWindow();
 
@@ -1430,8 +1434,6 @@ public class ManagedWindow : ContentControl
         else if ((e.Key == Key.Tab && e.KeyModifiers.HasFlag(KeyModifiers.Control) && e.KeyModifiers.HasFlag(KeyModifiers.Shift)) ||
                  (e.Key == Key.F6 && e.KeyModifiers.HasFlag(KeyModifiers.Control) && e.KeyModifiers.HasFlag(KeyModifiers.Shift)))
         {
-            if (s_MRU == null)
-                s_MRU = GetWindows().ToList();
             NextWindow();
             e.Handled = true;
             // return because we don't want to reset the MRU 
@@ -1440,8 +1442,6 @@ public class ManagedWindow : ContentControl
         else if ((e.Key == Key.Tab && e.KeyModifiers.HasFlag(KeyModifiers.Control)) ||
                  (e.Key == Key.F6 && e.KeyModifiers.HasFlag(KeyModifiers.Control)))
         {
-            if (s_MRU == null)
-                s_MRU = GetWindows().ToList();
             PreviousWindow();
             e.Handled = true;
             // return because we don't want to reset the MRU 
