@@ -25,6 +25,7 @@ The **WindowsPanel** control creates a region that hosts multiple windows. Simpl
     <wm:WindowsPanel x:Name="Windows"/>
 ```
 
+
 ## ManagedWindow control
 The **ManagedWindow** control is a clone of the **Window** control. It has standard Window properties like **Title**, **WindowState**, **WindowStartupLocation**, **Position**, etc.
 Instead of being hosted using Native windows, a ManagedWindow control is hosted via the Avalonia Overlay system.
