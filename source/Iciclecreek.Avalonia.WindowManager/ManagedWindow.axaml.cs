@@ -1117,7 +1117,7 @@ public class ManagedWindow : ContentControl
     /// </summary>
     protected virtual void OnActivated()
     {
-        Dispatcher.UIThread.Invoke(() => Activated?.Invoke(this, EventArgs.Empty));
+        Dispatcher.UIThread.Invoke(() => Activated?.Invoke(this, EventArgs.Empty), DispatcherPriority.Input);
     }
 
     /// <summary>
@@ -1125,7 +1125,7 @@ public class ManagedWindow : ContentControl
     /// </summary>
     protected virtual void OnDeactivated()
     {
-        Dispatcher.UIThread.Invoke(() => Deactivated?.Invoke(this, EventArgs.Empty));
+        Dispatcher.UIThread.Invoke(() => Deactivated?.Invoke(this, EventArgs.Empty), DispatcherPriority.Input);
     }
 
     /// <summary>
@@ -1150,7 +1150,7 @@ public class ManagedWindow : ContentControl
     /// </remarks>
     protected virtual void OnClosing(WindowClosingEventArgs e)
     {
-        Dispatcher.UIThread.Invoke(() => Closing?.Invoke(this, e));
+        Dispatcher.UIThread.Invoke(() => Closing?.Invoke(this, e), DispatcherPriority.Input);
     }
 
     /// <summary>
@@ -1159,7 +1159,7 @@ public class ManagedWindow : ContentControl
     /// <param name="e">The event args.</param>
     protected virtual void OnClosed(EventArgs e)
     {
-        Dispatcher.UIThread.Invoke(() => Closed?.Invoke(this, e));
+        Dispatcher.UIThread.Invoke(() => Closed?.Invoke(this, e), DispatcherPriority.Input);
     }
 
     protected virtual async Task ShowAnimation()
@@ -1342,7 +1342,7 @@ public class ManagedWindow : ContentControl
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        Debug.WriteLine($"[ManagedWindow '{Title}'] OnKeyDown: Key={e.Key}, Source={e.Source?.GetType().Name}, IsActive={IsActive}");
+        //Debug.WriteLine($"[ManagedWindow '{Title}'] OnKeyDown: Key={e.Key}, Source={e.Source?.GetType().Name}, IsActive={IsActive}");
         
         if (_keyboardMoving || _keyboardSizing)
         {
