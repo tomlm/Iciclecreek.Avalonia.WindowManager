@@ -1065,6 +1065,9 @@ public class ManagedWindow : ContentControl
         OnClosed(new EventArgs());
         RaiseEvent(new RoutedEventArgs(WindowClosedEvent));
 
+        if (s_MRU == null)
+            s_MRU = GetWindows().ToList();
+
         this.WindowsPanel.Windows.Remove(this);
 
         PreviousWindow();
