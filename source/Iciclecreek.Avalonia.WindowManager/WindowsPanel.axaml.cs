@@ -120,19 +120,10 @@ namespace Iciclecreek.Avalonia.WindowManager
             var focusManager = TopLevel.GetTopLevel(this)?.FocusManager;
             var focusedElement = focusManager?.GetFocusedElement();
             
-            Debug.WriteLine($"[WindowsPanel] KeyDown: Key={e.Key}, Source={e.Source?.GetType().Name}, FocusedElement={focusedElement?.GetType().Name}");
-            
             // Find which ManagedWindow contains the focused element
             if (focusedElement is Control focusedControl)
             {
                 var window = focusedControl.FindAncestorOfType<ManagedWindow>();
-                Debug.WriteLine($"[WindowsPanel] FocusedControl is in window: {window?.Title ?? "null"}, IsActive={window?.IsActive}");
-            }
-            
-            // Log all windows and their active state
-            foreach (var win in _canvas.Children.OfType<ManagedWindow>())
-            {
-                Debug.WriteLine($"[WindowsPanel]   Window '{win.Title}': IsActive={win.IsActive}, ZIndex={win.ZIndex}");
             }
         }
 
