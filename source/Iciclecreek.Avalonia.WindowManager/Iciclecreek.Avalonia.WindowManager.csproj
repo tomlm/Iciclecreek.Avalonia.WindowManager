@@ -44,8 +44,4 @@
     <AvaloniaResource Include="**/*.*xaml" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\Porta.Pty\src\Porta.Pty\Porta.Pty.csproj" />
-  </ItemGroup>
-
 </Project>
