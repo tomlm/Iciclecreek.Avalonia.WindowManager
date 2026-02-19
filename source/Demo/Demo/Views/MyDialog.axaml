@@ -1,4 +1,4 @@
-<wm:ManagedWindow xmlns="https://github.com/avaloniaui"
+<wm:PortableWindow xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -30,4 +30,4 @@
           Click="OnCancel">Cancel</Button>
     </StackPanel>
   </StackPanel>
-</wm:ManagedWindow>
+</wm:PortableWindow>

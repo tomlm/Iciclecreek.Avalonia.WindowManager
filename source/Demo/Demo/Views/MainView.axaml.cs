@@ -24,9 +24,7 @@ namespace Demo.Views
                 WindowState = Enum.Parse<WindowState>(((ComboBoxItem)WindowStateCombo.SelectedItem).Tag.ToString()),    
             };
 
-            window.SizeToBounds(this.Bounds);
-
-                window.Show(this);
+            window.Show(this);
         }
 
         private void OnClick(object? sender, RoutedEventArgs args)
@@ -44,8 +42,6 @@ namespace Demo.Views
                 CanResize = false,
             };
             dialog.ViewModel.Text = ViewModel.Text;
-
-            dialog.SizeToBounds(this.Bounds);
 
             var result = await dialog.ShowDialog<string?>(this);
             if (result != null)

@@ -7,7 +7,7 @@ using Avalonia.Interactivity;
 
 namespace Demo;
 
-public partial class MyWindow : ManagedWindow
+public partial class MyWindow : PortableWindow
 {
     private static int _windowCount = 0;
     private static IImmutableSolidColorBrush[] brushes =
@@ -57,8 +57,6 @@ public partial class MyWindow : ManagedWindow
             SizeToContent = Enum.Parse<SizeToContent>(((ComboBoxItem)SizeToContentCombo.SelectedItem).Tag.ToString()),
         };
         dialog.ViewModel.Text = ViewModel.Text;
-
-        dialog.SizeToBounds(this.Bounds);
 
         var result = await dialog.ShowDialog<string?>(this);
         if (result != null)
