@@ -1,4 +1,6 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Interactivity;
 using Demo.ViewModels;
 using Iciclecreek.Avalonia.WindowManager;
@@ -12,6 +14,11 @@ namespace Demo.Views
         {
             InitializeComponent();
             this.DataContext = new MainViewModel();
+
+            var lifetime = Application.Current?.ApplicationLifetime;
+            var isDesktopNonConsole = lifetime is IClassicDesktopStyleApplicationLifetime
+                && lifetime.GetType().Name != "ConsoloniaLifetime";
+            ShowSystemWindowButton.IsEnabled = isDesktopNonConsole;
         }
         public MainViewModel ViewModel => (MainViewModel)DataContext;
 
@@ -33,6 +40,39 @@ namespace Demo.Views
             model.Counter++;
         }
 
+        private void OnShowManagedWindow(object? sender, RoutedEventArgs args)
+        {
+            var window = new ManagedOnlyMyWindow()
+            {
+                WindowStartupLocation = Enum.Parse<WindowStartupLocation>((StartupLocationCombo.SelectedItem as ComboBoxItem).Tag.ToString()),
+                SizeToContent = Enum.Parse<SizeToContent>(((ComboBoxItem)SizeToContentCombo.SelectedItem).Tag.ToString()),
+                WindowState = Enum.Parse<WindowState>(((ComboBoxItem)WindowStateCombo.SelectedItem).Tag.ToString()),
+            };
+            window.Show(this);
+        }
+
+        private void OnShowSystemWindow(object? sender, RoutedEventArgs args)
+        {
+            var window = new SystemOnlyMyWindow()
+            {
+                WindowStartupLocation = Enum.Parse<WindowStartupLocation>((StartupLocationCombo.SelectedItem as ComboBoxItem).Tag.ToString()),
+                SizeToContent = Enum.Parse<SizeToContent>(((ComboBoxItem)SizeToContentCombo.SelectedItem).Tag.ToString()),
+                WindowState = Enum.Parse<WindowState>(((ComboBoxItem)WindowStateCombo.SelectedItem).Tag.ToString()),
+            };
+            window.Show(this);
+        }
+
+        private void OnShowPortableWindow(object? sender, RoutedEventArgs args)
+        {
+            var window = new MyWindow()
+            {
+                WindowStartupLocation = Enum.Parse<WindowStartupLocation>((StartupLocationCombo.SelectedItem as ComboBoxItem).Tag.ToString()),
+                SizeToContent = Enum.Parse<SizeToContent>(((ComboBoxItem)SizeToContentCombo.SelectedItem).Tag.ToString()),
+                WindowState = Enum.Parse<WindowState>(((ComboBoxItem)WindowStateCombo.SelectedItem).Tag.ToString()),
+            };
+            window.Show(this);
+        }
+
         private async void OnShowDialog(object? sender, RoutedEventArgs args)
         {
             var dialog = new MyDialog()
@@ -46,6 +86,16 @@ namespace Demo.Views
             var result = await dialog.ShowDialog<string?>(this);
             if (result != null)
                 ViewModel.Text = result;
+        }
+
+        private class ManagedOnlyMyWindow : MyWindow
+        {
+            protected override IPortableWindowHost CreateHost() => new ManagedWindowHost();
+        }
+
+        private class SystemOnlyMyWindow : MyWindow
+        {
+            protected override IPortableWindowHost CreateHost() => new SystemWindowHost();
         }
     }
 }
