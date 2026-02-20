@@ -35,6 +35,11 @@
     </StackPanel>
     
     <Button Content="_Add a window" Click="OnAddWindowClick" HorizontalAlignment="Left"/>
+    <StackPanel Orientation="Horizontal" Spacing="4">
+      <Button Content="Show _Managed Window" Click="OnShowManagedWindow" HorizontalAlignment="Left"/>
+      <Button Content="Show _System Window" Click="OnShowSystemWindow" Name="ShowSystemWindowButton" HorizontalAlignment="Left"/>
+      <Button Content="Show _Portable Window" Click="OnShowPortableWindow" HorizontalAlignment="Left"/>
+    </StackPanel>
     
     <StackPanel Orientation="Horizontal" >
       <Button HorizontalAlignment="Left" Click="OnClick" Content="_Increment"/>

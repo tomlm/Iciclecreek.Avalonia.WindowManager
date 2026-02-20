@@ -6,7 +6,7 @@ using Avalonia.Interactivity;
 
 namespace Demo;
 
-public partial class MyDialog : ManagedWindow
+public partial class MyDialog : PortableWindow
 {
     private static int _dialogCount = 0;
     private static IImmutableSolidColorBrush[] brushes =

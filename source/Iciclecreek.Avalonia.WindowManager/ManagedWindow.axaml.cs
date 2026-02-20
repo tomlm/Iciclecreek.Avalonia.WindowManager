@@ -79,7 +79,7 @@ public class ManagedWindow : ContentControl
     private const string CLASS_FixedSize = ":fixedsize";
 
     // used to track MRU windows globally
-    private static List<ManagedWindow> s_MRU = null;
+    private static List<ManagedWindow>? s_MRU = null;
     private static bool s_isAnyWindowActivating = false;  // Global guard against activation loops
 
     private PixelPoint _minimizedPosition = new PixelPoint(int.MinValue, int.MinValue);
@@ -214,7 +214,7 @@ public class ManagedWindow : ContentControl
         AffectsMeasure<ManagedWindow>(
             SystemDecorationsProperty,
             WindowStateProperty);
-        
+
         // ManagedWindow should be focusable to properly receive keyboard input
         FocusableProperty.OverrideDefaultValue<ManagedWindow>(true);
     }
@@ -276,7 +276,7 @@ public class ManagedWindow : ContentControl
             },
             canExecute: this.WhenAnyValue(win => win.CanResize, win => win.WindowState, (canResize, windowState) => canResize && windowState == WindowState.Normal),
             outputScheduler: AvaloniaScheduler.Instance);
-        
+
         // Don't subscribe to GotFocus here - it causes infinite loops
         // Window activation is handled through PointerPressed events instead
     }
@@ -295,7 +295,7 @@ public class ManagedWindow : ContentControl
         this.WindowsPanel.SizeChanged += OnWindowsPanelSizeChanged;
     }
 
-    private void OnWindowsPanelSizeChanged(object sender, SizeChangedEventArgs e)
+    private void OnWindowsPanelSizeChanged(object? sender, SizeChangedEventArgs e)
     {
         if (WindowState == WindowState.Maximized)
         {
@@ -515,7 +515,7 @@ public class ManagedWindow : ContentControl
 
     public IInsetsManager? InsetsManager => TopLevel.GetTopLevel(this)!.PlatformImpl!.TryGetFeature<IInsetsManager>();
     public IInputPane? InputPane => PlatformImpl!.TryGetFeature<IInputPane>();
-    public ILauncher Launcher => PlatformImpl!.TryGetFeature<ILauncher>();
+    public ILauncher Launcher => PlatformImpl!.TryGetFeature<ILauncher>()!;
 
     /// <summary>
     /// Gets the platform's clipboard implementation
@@ -736,7 +736,7 @@ public class ManagedWindow : ContentControl
             _minimizedPosition = new PixelPoint(this.Position.X, this.Position.Y);
 
         await ResizeAnimation(new Rect(this.Position.X, this.Position.Y, this.Bounds.Width, this.Bounds.Height),
-                              new Rect(_minimizedPosition.X, _minimizedPosition.Y, _title.Bounds.Width, _title.Bounds.Height));
+                              new Rect(_minimizedPosition.X, _minimizedPosition.Y, _title!.Bounds.Width, _title.Bounds.Height));
 
         this.Position = _minimizedPosition;
         this.Width = double.NaN;
@@ -756,7 +756,7 @@ public class ManagedWindow : ContentControl
             Debug.WriteLine($"[ManagedWindow '{Title}'] Activate: Already activating (local={_isActivating}, global={s_isAnyWindowActivating}), skipping");
             return;
         }
-        
+
         if (!IsActive && ModalDialog == null && Parent != null)
         {
             if (WindowState == WindowState.Minimized)
@@ -770,14 +770,14 @@ public class ManagedWindow : ContentControl
             {
                 // Set IsActive FIRST before any focus operations
                 IsActive = true;
-                
+
                 foreach (var win in GetWindows().Where(win => win != this))
                 {
                     win.Deactivate();
                 }
                 BringToTop();
                 SetPsudoClasses();
-                
+
                 OnActivated();
 
                 // Don't focus content here - it causes focus loops
@@ -800,7 +800,7 @@ public class ManagedWindow : ContentControl
     private void FocusContentInternal()
     {
         Debug.WriteLine($"[ManagedWindow '{Title}'] FocusContentInternal: _focus={_focus?.GetType().Name}");
-        
+
         if (_focus != null && _focus.IsVisible && _focus.IsEnabled)
         {
             Debug.WriteLine($"[ManagedWindow '{Title}'] Focusing: {_focus.GetType().Name}");
@@ -813,7 +813,7 @@ public class ManagedWindow : ContentControl
             var focusable = _content.GetVisualDescendants()
                 .OfType<Control>()
                 .FirstOrDefault(c => c.Focusable && c.IsVisible && c.IsEnabled);
-            
+
             if (focusable != null)
             {
                 Debug.WriteLine($"[ManagedWindow '{Title}'] Focusing first: {focusable.GetType().Name}");
@@ -876,7 +876,7 @@ public class ManagedWindow : ContentControl
         {
             // try and find the window host as parent of this element.
             this.WindowsPanel = parent.FindAncestorOfType<WindowsPanel>(true) ??
-                                parent.FindDescendantOfType<WindowsPanel>(true);
+                                parent.FindDescendantOfType<WindowsPanel>(true)!;
             if (this.WindowsPanel == null)
             {
                 WindowsPanel = FindTopWindowsPanel();
@@ -931,15 +931,18 @@ public class ManagedWindow : ContentControl
     private WindowsPanel FindTopWindowsPanel()
     {
         // search from top down
+        WindowsPanel? windowsPanel = null;
         if (Application.Current?.ApplicationLifetime is ISingleViewApplicationLifetime singleView)
         {
-            return singleView.MainView?.FindDescendantOfType<WindowsPanel>(true);
+            windowsPanel = singleView.MainView?.FindDescendantOfType<WindowsPanel>(true);
         }
         else if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            return desktop.MainWindow?.FindDescendantOfType<WindowsPanel>(true);
+            windowsPanel = desktop.MainWindow?.FindDescendantOfType<WindowsPanel>(true);
         }
-        return null;
+        if (windowsPanel == null)
+            throw new ArgumentNullException(nameof(WindowsPanel), "To show a window you need to add a WindowsPanel to your visual hierachy.");
+        return windowsPanel;
     }
 
     /// <summary>
@@ -1273,7 +1276,7 @@ public class ManagedWindow : ContentControl
         base.OnApplyTemplate(e);
 
         this.AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
-        
+
         // Handle pointer pressed to activate window when clicked anywhere
         this.AddHandler(PointerPressedEvent, OnWindowPointerPressed, RoutingStrategies.Tunnel);
 
@@ -1327,7 +1330,7 @@ public class ManagedWindow : ContentControl
             };
         }
 
-        _content = e.NameScope.Find<ContentPresenter>(PART_ContentPresenter);
+        _content = e.NameScope.Find<ContentPresenter>(PART_ContentPresenter)!;
         ArgumentNullException.ThrowIfNull(_content);
 
         _modalOverlay = e.NameScope.Find<Panel>(PART_ModalOverlay);
@@ -1346,11 +1349,11 @@ public class ManagedWindow : ContentControl
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
         //Debug.WriteLine($"[ManagedWindow '{Title}'] OnKeyDown: Key={e.Key}, Source={e.Source?.GetType().Name}, IsActive={IsActive}");
-        
+
         if (_keyboardMoving || _keyboardSizing)
         {
             // TODO: Make this configurable
-            var sizing = (Int32)this.FindResource("ManagedWindow_SizingVector");
+            var sizing = (Int32)this.FindResource("ManagedWindow_SizingVector")!;
             switch (e.Key)
             {
                 case Key.Left:
@@ -1889,28 +1892,28 @@ public class ManagedWindow : ContentControl
                 var childRect = targetRect.CenterRect(size);
                 this.Position = childRect.Position;
             }
-            else 
+            else
             {
                 var targetRect = new PixelRect(
-                    new PixelPoint(0,0),
+                    new PixelPoint(0, 0),
                     new PixelSize((int)this.WindowsPanel.Bounds.Width, (int)this.WindowsPanel.Bounds.Height));
                 var childRect = targetRect.CenterRect(size);
                 this.Position = childRect.Position;
             }
         }
-    //    else if (WindowStartupLocation == WindowStartupLocation.CenterScreen)
-    //    {
-    //        var classic = Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
-    //        var single = Application.Current.ApplicationLifetime as ISingleViewApplicationLifetime;
-    //        var screenBounds = classic?.MainWindow.Bounds ?? single?.MainView?.Bounds ?? throw new ArgumentNullException("Screen");
-    //        var screenSize = new PixelRect(0, 0, (int)screenBounds.Width, (int)screenBounds.Height);
+        //    else if (WindowStartupLocation == WindowStartupLocation.CenterScreen)
+        //    {
+        //        var classic = Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
+        //        var single = Application.Current.ApplicationLifetime as ISingleViewApplicationLifetime;
+        //        var screenBounds = classic?.MainWindow.Bounds ?? single?.MainView?.Bounds ?? throw new ArgumentNullException("Screen");
+        //        var screenSize = new PixelRect(0, 0, (int)screenBounds.Width, (int)screenBounds.Height);
 
-    //        var childRect = screenSize.CenterRect(size);
-    //        this.Position = childRect.Position;
-    //    }
+        //        var childRect = screenSize.CenterRect(size);
+        //        this.Position = childRect.Position;
+        //    }
     }
 
-    
+
 
     private IEnumerable<ManagedWindow> GetWindows()
     {
