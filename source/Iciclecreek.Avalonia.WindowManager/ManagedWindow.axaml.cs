@@ -1488,7 +1488,7 @@ public class ManagedWindow : ContentControl
 
         partTitleBar.PointerPressed += (object? sender, PointerPressedEventArgs e) =>
         {
-            if (WindowState != WindowState.Maximized)
+            if (WindowState != WindowState.Maximized && WindowState != WindowState.Minimized)
             {
                 var properties = e.GetCurrentPoint(this).Properties;
                 if (properties.IsLeftButtonPressed)
