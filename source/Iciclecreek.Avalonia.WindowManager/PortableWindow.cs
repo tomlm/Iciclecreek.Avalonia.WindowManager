@@ -93,6 +93,12 @@ namespace Iciclecreek.Avalonia.WindowManager
         public static readonly StyledProperty<PixelPoint> PositionProperty =
             AvaloniaProperty.Register<PortableWindow, PixelPoint>(nameof(Position));
 
+        /// <summary>
+        /// Defines the <see cref="ResizeThickness"/> property.
+        /// </summary>
+        public static readonly StyledProperty<Thickness> ResizeThicknessProperty =
+            AvaloniaProperty.Register<PortableWindow, Thickness>(nameof(ResizeThickness), default);
+
         private IPortableWindowHost _host;
 
         /// <summary>
@@ -174,6 +180,17 @@ namespace Iciclecreek.Avalonia.WindowManager
         {
             get => GetValue(WindowDecorationsProperty);
             set => SetValue(WindowDecorationsProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the resize hit-test thickness. When zero (default),
+        /// BorderThickness is used. Set this to a larger value to make resize
+        /// edges easier to grab (e.g. for low-resolution mouse input).
+        /// </summary>
+        public Thickness ResizeThickness
+        {
+            get => GetValue(ResizeThicknessProperty);
+            set => SetValue(ResizeThicknessProperty, value);
         }
 
         /// <summary>

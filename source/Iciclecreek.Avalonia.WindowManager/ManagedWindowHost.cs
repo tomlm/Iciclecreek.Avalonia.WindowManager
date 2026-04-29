@@ -101,6 +101,8 @@ namespace Iciclecreek.Avalonia.WindowManager
             { Source = _portableWindow, Mode = BindingMode.TwoWay });
             Bind(PositionProperty, new Binding(nameof(PortableWindow.Position))
             { Source = _portableWindow, Mode = BindingMode.TwoWay });
+            Bind(ResizeThicknessProperty, new Binding(nameof(PortableWindow.ResizeThickness))
+            { Source = _portableWindow, Mode = BindingMode.TwoWay });
 
             // One-way bindings for layout / appearance properties
             Bind(WidthProperty, new Binding(nameof(Width))
