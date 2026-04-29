@@ -1,6 +1,5 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
         xmlns:wm="using:Iciclecreek.Avalonia.WindowManager"
         x:DataType="wm:ManagedWindow">
 

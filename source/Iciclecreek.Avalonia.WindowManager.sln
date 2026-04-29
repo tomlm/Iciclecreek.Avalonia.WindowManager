@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.12.35527.113
+# Visual Studio Version 18
+VisualStudioVersion = 18.2.11430.68 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Iciclecreek.Avalonia.WindowManager", "Iciclecreek.Avalonia.WindowManager\Iciclecreek.Avalonia.WindowManager.csproj", "{4CC46104-EBB6-4EB8-A8BD-0AFDF604E58A}"
 EndProject
@@ -28,7 +28,7 @@ Global
 		{4CC46104-EBB6-4EB8-A8BD-0AFDF604E58A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4CC46104-EBB6-4EB8-A8BD-0AFDF604E58A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4CC46104-EBB6-4EB8-A8BD-0AFDF604E58A}.Release|Any CPU.Build.0 = Release|Any CPU
-{6F716BC2-0147-40C6-ADBA-8B510A8B3224}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F716BC2-0147-40C6-ADBA-8B510A8B3224}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6F716BC2-0147-40C6-ADBA-8B510A8B3224}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6F716BC2-0147-40C6-ADBA-8B510A8B3224}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6F716BC2-0147-40C6-ADBA-8B510A8B3224}.Release|Any CPU.Build.0 = Release|Any CPU
@@ -39,5 +39,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BD8D9C46-5F43-4E6F-B75F-CB6EE0719318}
 	EndGlobalSection
 EndGlobal

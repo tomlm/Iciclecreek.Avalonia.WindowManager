@@ -42,6 +42,6 @@
   </Application.Resources>
 
   <Application.Styles>
-    <console:FluentTheme />
+    <console:ModernTheme />
   </Application.Styles>
 </Application>
