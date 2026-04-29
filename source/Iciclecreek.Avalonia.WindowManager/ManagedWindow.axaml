@@ -17,7 +17,7 @@
     <Setter Property="BoxShadow" 
             Value="{DynamicResource ManagedWindow_BoxShadows}"/>
     <Setter Property="Padding" Value="0" />
-    <Setter Property="SystemDecorations" Value="Full"/>
+    <Setter Property="WindowDecorations" Value="Full"/>
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate>
