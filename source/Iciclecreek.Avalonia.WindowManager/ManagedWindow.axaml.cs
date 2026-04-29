@@ -88,6 +88,7 @@ public class ManagedWindow : ContentControl
     private ManagedWindow? _owner;
     private bool _loaded;
     private bool _isActive;
+    private bool _resizeThicknessExplicitlySet;
     private object? _dialogResult;
     private Control? _title;
     private Control? _titleBar;
@@ -199,6 +200,14 @@ public class ManagedWindow : ContentControl
         AvaloniaProperty.Register<ManagedWindow, WindowDecorations>(nameof(WindowDecorations), WindowDecorations.Full);
 
     /// <summary>
+    /// Defines the <see cref="ResizeThickness"/> property.
+    /// When non-zero, overrides BorderThickness for resize hit-test zones,
+    /// allowing a larger clickable area without affecting the visual border.
+    /// </summary>
+    public static readonly StyledProperty<Thickness> ResizeThicknessProperty =
+        AvaloniaProperty.Register<ManagedWindow, Thickness>(nameof(ResizeThickness), default);
+
+    /// <summary>
     /// Routed event that can be used for global tracking of window destruction
     /// </summary>
     public static readonly RoutedEvent<RoutedEventArgs> WindowClosedEvent =
@@ -228,6 +237,9 @@ public class ManagedWindow : ContentControl
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     {
         SetValue(KeyboardNavigation.TabNavigationProperty, KeyboardNavigationMode.Cycle);
+
+        // Default ResizeThickness to BorderThickness
+        SetCurrentValue(ResizeThicknessProperty, BorderThickness);
 
         _closeCommand = new ManagedWindowCommand(() => Close());
 
@@ -442,6 +454,17 @@ public class ManagedWindow : ContentControl
     }
 
     /// <summary>
+    /// Gets or sets the resize hit-test thickness. When zero (default),
+    /// BorderThickness is used. Set this to a larger value to make resize
+    /// edges easier to grab (e.g. for low-resolution mouse input).
+    /// </summary>
+    public Thickness ResizeThickness
+    {
+        get => GetValue(ResizeThicknessProperty);
+        set => SetValue(ResizeThicknessProperty, value);
+    }
+
+    /// <summary>
     /// Gets or sets the startup location of the window.
     /// </summary>
     public WindowStartupLocation WindowStartupLocation
@@ -644,6 +667,18 @@ public class ManagedWindow : ContentControl
 
             case nameof(WindowDecorations):
                 SetPsudoClasses();
+                break;
+
+            case nameof(BorderThickness):
+                // Sync ResizeThickness to BorderThickness when not explicitly set.
+                if (!_resizeThicknessExplicitlySet)
+                    SetCurrentValue(ResizeThicknessProperty, BorderThickness);
+                break;
+
+            case nameof(ResizeThickness):
+                // Mark as explicitly set only if it differs from BorderThickness
+                if (ResizeThickness != BorderThickness)
+                    _resizeThicknessExplicitlySet = true;
                 break;
 
             default:

@@ -20,14 +20,18 @@
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate>
-          <!--window border used for resizing -->
+          <!--outer invisible border for resize hit-testing (uses ResizeThickness) -->
           <Border Name="PART_WindowBorder"
-                  BorderBrush="{TemplateBinding BorderBrush}"
-                  BorderThickness="{TemplateBinding BorderThickness}"
-                  BoxShadow="{TemplateBinding BoxShadow}"
-                  CornerRadius="{TemplateBinding CornerRadius}">
-            <Grid RowDefinitions="Auto *"
-                  Background="{TemplateBinding Background}">
+                  BorderBrush="Transparent"
+                  BorderThickness="{TemplateBinding ResizeThickness}"
+                  Background="Transparent">
+            <!--inner visible border for visual styling -->
+            <Border BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    BoxShadow="{TemplateBinding BoxShadow}"
+                    CornerRadius="{TemplateBinding CornerRadius}">
+              <Grid RowDefinitions="Auto *"
+                    Background="{TemplateBinding Background}">
               <Grid.KeyBindings>
                 <KeyBinding Gesture="Alt+-"
                             Command="{Binding $parent[wm:ManagedWindow].ShowSystemMenuCommand}" />
@@ -139,6 +143,7 @@
                      Background="{DynamicResource ManagedWindow_ModalBackgroundBrush}">
               </Panel>
             </Grid>
+            </Border>
           </Border>
 
 
