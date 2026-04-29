@@ -1,7 +1,6 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:wm="using:Iciclecreek.Avalonia.WindowManager"
-        xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
         xmlns:converters="using:Avalonia.Controls.Converters"
         x:Class="Iciclecreek.Avalonia.WindowManager.WindowManagerTheme">
 
@@ -53,6 +52,8 @@
       </ResourceDictionary.ThemeDictionaries>
 
       <!-- shared resources-->
+      <!-- To restore IconPacks icons: add xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
+           to the root Styles element and uncomment the StyleInclude at the bottom of this file. -->
       <Thickness x:Key='ManagedWindow_BorderThickness'>4</Thickness>
       <x:Double x:Key="ManagedWindow_SystemIconSize">12</x:Double>
       <x:Double x:Key="ManagedWindow_SystemIconSpacing">8</x:Double>
@@ -60,6 +61,7 @@
       <Thickness x:Key='ManagedWindow_TitleMargin'>8 0 0 0</Thickness>
       <converters:EnumToBoolConverter x:Key="EnumToBoolConverter" />
 
+      <!--
       <DataTemplate x:Key="ManagedWindow_MinimizeIcon">
         <ContentControl>
           <iconPacks:Codicons Kind="ChromeMinimize"
@@ -67,41 +69,91 @@
                               Height="{StaticResource ManagedWindow_SystemIconSize}"/>
         </ContentControl>
       </DataTemplate>
+      -->
+      <DataTemplate x:Key="ManagedWindow_MinimizeIcon">
+        <Viewbox Width="{StaticResource ManagedWindow_SystemIconSize}" Height="{StaticResource ManagedWindow_SystemIconSize}" Stretch="Uniform">
+          <Canvas Width="10" Height="10">
+            <Line StartPoint="1,8" EndPoint="9,8" Stroke="{DynamicResource ManagedWindow_TitleBarForegroundBrush}" StrokeThickness="1.5"/>
+          </Canvas>
+        </Viewbox>
+      </DataTemplate>
 
+      <!--
       <DataTemplate x:Key="ManagedWindow_MaximizeIcon">
         <ContentControl>
-          <iconPacks:Codicons
-                          Kind="ChromeMaximize"
-                          Width="{StaticResource ManagedWindow_SystemIconSize}"
-                          Height="{StaticResource ManagedWindow_SystemIconSize}"/>
+          <iconPacks:Codicons Kind="ChromeMaximize"
+                              Width="{StaticResource ManagedWindow_SystemIconSize}"
+                              Height="{StaticResource ManagedWindow_SystemIconSize}"/>
         </ContentControl>
       </DataTemplate>
+      -->
+      <DataTemplate x:Key="ManagedWindow_MaximizeIcon">
+        <Viewbox Width="{StaticResource ManagedWindow_SystemIconSize}" Height="{StaticResource ManagedWindow_SystemIconSize}" Stretch="Uniform">
+          <Canvas Width="10" Height="10">
+            <Rectangle Canvas.Left="1" Canvas.Top="1" Width="8" Height="8"
+                        Stroke="{DynamicResource ManagedWindow_TitleBarForegroundBrush}" StrokeThickness="1.5" Fill="Transparent"/>
+          </Canvas>
+        </Viewbox>
+      </DataTemplate>
 
+      <!--
       <DataTemplate x:Key="ManagedWindow_RestoreIcon">
         <ContentControl>
-          <iconPacks:Codicons
-                          Kind="ChromeRestore"
-                          Width="{StaticResource ManagedWindow_SystemIconSize}"
-                          Height="{StaticResource ManagedWindow_SystemIconSize}"/>
+          <iconPacks:Codicons Kind="ChromeRestore"
+                              Width="{StaticResource ManagedWindow_SystemIconSize}"
+                              Height="{StaticResource ManagedWindow_SystemIconSize}"/>
         </ContentControl>
       </DataTemplate>
+      -->
+      <DataTemplate x:Key="ManagedWindow_RestoreIcon">
+        <Viewbox Width="{StaticResource ManagedWindow_SystemIconSize}" Height="{StaticResource ManagedWindow_SystemIconSize}" Stretch="Uniform">
+          <Canvas Width="10" Height="10">
+            <!-- back square -->
+            <Rectangle Canvas.Left="2.5" Canvas.Top="0.5" Width="7" Height="7"
+                        Stroke="{DynamicResource ManagedWindow_TitleBarForegroundBrush}" StrokeThickness="1.5" Fill="Transparent"/>
+            <!-- front square -->
+            <Rectangle Canvas.Left="0.5" Canvas.Top="2.5" Width="7" Height="7"
+                        Stroke="{DynamicResource ManagedWindow_TitleBarForegroundBrush}" StrokeThickness="1.5"
+                        Fill="{DynamicResource ManagedWindow_TitleBarBackgroundBrush}"/>
+          </Canvas>
+        </Viewbox>
+      </DataTemplate>
 
+      <!--
       <DataTemplate x:Key="ManagedWindow_CloseIcon">
         <ContentControl>
-          <iconPacks:Codicons
-                          Kind="ChromeClose"
-                          Width="{StaticResource ManagedWindow_SystemIconSize}"
-                          Height="{StaticResource ManagedWindow_SystemIconSize}"/>
+          <iconPacks:Codicons Kind="ChromeClose"
+                              Width="{StaticResource ManagedWindow_SystemIconSize}"
+                              Height="{StaticResource ManagedWindow_SystemIconSize}"/>
         </ContentControl>
       </DataTemplate>
+      -->
+      <DataTemplate x:Key="ManagedWindow_CloseIcon">
+        <Viewbox Width="{StaticResource ManagedWindow_SystemIconSize}" Height="{StaticResource ManagedWindow_SystemIconSize}" Stretch="Uniform">
+          <Canvas Width="10" Height="10">
+            <Line StartPoint="1,1" EndPoint="9,9" Stroke="{DynamicResource ManagedWindow_TitleBarForegroundBrush}" StrokeThickness="1.5"/>
+            <Line StartPoint="9,1" EndPoint="1,9" Stroke="{DynamicResource ManagedWindow_TitleBarForegroundBrush}" StrokeThickness="1.5"/>
+          </Canvas>
+        </Viewbox>
+      </DataTemplate>
 
+      <!--
       <DataTemplate x:Key="ManagedWindow_SystemMenuIcon">
         <ContentControl>
-          <iconPacks:Codicons
-                          Kind="Menu"
-                          Width="{StaticResource ManagedWindow_SystemIconSize}"
-                          Height="{StaticResource ManagedWindow_SystemIconSize}"/>
+          <iconPacks:Codicons Kind="Menu"
+                              Width="{StaticResource ManagedWindow_SystemIconSize}"
+                              Height="{StaticResource ManagedWindow_SystemIconSize}"/>
         </ContentControl>
+      </DataTemplate>
+      -->
+      <DataTemplate x:Key="ManagedWindow_SystemMenuIcon">
+        <Viewbox Width="{StaticResource ManagedWindow_SystemIconSize}" Height="{StaticResource ManagedWindow_SystemIconSize}" Stretch="Uniform">
+          <Canvas Width="10" Height="10">
+            <Line StartPoint="1,2" EndPoint="9,2" Stroke="{DynamicResource ManagedWindow_TitleBarForegroundBrush}" StrokeThickness="1.5"/>
+            <Line StartPoint="1,5" EndPoint="9,5" Stroke="{DynamicResource ManagedWindow_TitleBarForegroundBrush}" StrokeThickness="1.5"/>
+            <Line StartPoint="1,8" EndPoint="9,8" Stroke="{DynamicResource ManagedWindow_TitleBarForegroundBrush}" StrokeThickness="1.5"/>
+          </Canvas>
+        </Viewbox>
       </DataTemplate>
 
     </ResourceDictionary>
@@ -117,6 +169,6 @@
     <Setter Property="Theme" Value="{DynamicResource {x:Type wm:WindowsPanel}}"/>
   </Style>
 
-  <StyleInclude Source="avares://IconPacks.Avalonia.Codicons/Codicons.axaml" />
+  <!--<StyleInclude Source="avares://IconPacks.Avalonia.Codicons/Codicons.axaml" />-->
 
 </Styles>

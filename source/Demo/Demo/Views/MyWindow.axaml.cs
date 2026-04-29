@@ -67,8 +67,8 @@ public partial class MyWindow : PortableWindow
     {
         if (this.SystemDecorationCombo?.SelectedItem is ComboBoxItem item)
         {
-            var decoration = Enum.Parse<SystemDecorations>(item.Tag.ToString());
-            this.SystemDecorations = decoration;
+            var decoration = Enum.Parse<WindowDecorations>(item.Tag.ToString());
+            this.WindowDecorations = decoration;
         }
     }
 }

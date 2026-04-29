@@ -119,7 +119,7 @@ namespace Iciclecreek.Avalonia.WindowManager
             { Source = _portableWindow, Mode = BindingMode.TwoWay });
             Bind(Window.TopmostProperty, new Binding(nameof(PortableWindow.Topmost))
             { Source = _portableWindow, Mode = BindingMode.TwoWay });
-            Bind(Window.SystemDecorationsProperty, new Binding(nameof(PortableWindow.SystemDecorations))
+            Bind(Window.WindowDecorationsProperty, new Binding(nameof(PortableWindow.WindowDecorations))
             { Source = _portableWindow, Mode = BindingMode.TwoWay });
             Bind(Window.ClosingBehaviorProperty, new Binding(nameof(PortableWindow.ClosingBehavior))
             { Source = _portableWindow, Mode = BindingMode.TwoWay });

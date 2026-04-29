@@ -13,18 +13,15 @@ using Avalonia.Media;
 using Avalonia.Metadata;
 using Avalonia.Platform;
 using Avalonia.Platform.Storage;
-using Avalonia.ReactiveUI;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using ReactiveUI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Reactive;
-using System.Reactive.Linq;
 using System.Threading.Tasks;
+using System.Windows.Input;
 
 namespace Iciclecreek.Avalonia.WindowManager;
 
@@ -103,14 +100,21 @@ public class ManagedWindow : ContentControl
     private ManagedWindow? _modalDialog;
     private readonly List<(ManagedWindow Child, bool IsDialog)> _children = new List<(ManagedWindow, bool)>();
     private bool _isActivating;  // Guard against re-entrant activation
+    private readonly ManagedWindowCommand _closeCommand;
+    private readonly ManagedWindowCommand _restoreCommand;
+    private readonly ManagedWindowCommand _minimizeCommand;
+    private readonly ManagedWindowCommand _maximizeCommand;
+    private readonly ManagedWindowCommand _sizeCommand;
+    private readonly ManagedWindowCommand _moveCommand;
+    private readonly ManagedWindowCommand _showSystemMenuCommand;
 
-    public ReactiveCommand<Unit, Unit> CloseCommand { get; }
-    public ReactiveCommand<Unit, Unit> RestoreCommand { get; }
-    public ReactiveCommand<Unit, Unit> MinimizeCommand { get; }
-    public ReactiveCommand<Unit, Unit> MaximizeCommand { get; }
-    public ReactiveCommand<Unit, Unit> SizeCommand { get; }
-    public ReactiveCommand<Unit, Unit> MoveCommand { get; }
-    public ReactiveCommand<Unit, Unit> ShowSystemMenuCommand { get; }
+    public ICommand CloseCommand => _closeCommand;
+    public ICommand RestoreCommand => _restoreCommand;
+    public ICommand MinimizeCommand => _minimizeCommand;
+    public ICommand MaximizeCommand => _maximizeCommand;
+    public ICommand SizeCommand => _sizeCommand;
+    public ICommand MoveCommand => _moveCommand;
+    public ICommand ShowSystemMenuCommand => _showSystemMenuCommand;
 
 
     /// <summary>
@@ -189,10 +193,10 @@ public class ManagedWindow : ContentControl
         AvaloniaProperty.Register<ManagedWindow, BoxShadows>(nameof(BoxShadow));
 
     /// <summary>
-    /// Defines the <see cref="SystemDecorations"/> property.
+    /// Defines the <see cref="WindowDecorations"/> property.
     /// </summary>
-    public static readonly StyledProperty<SystemDecorations> SystemDecorationsProperty =
-        AvaloniaProperty.Register<ManagedWindow, SystemDecorations>(nameof(SystemDecorations), SystemDecorations.Full);
+    public static readonly StyledProperty<WindowDecorations> WindowDecorationsProperty =
+        AvaloniaProperty.Register<ManagedWindow, WindowDecorations>(nameof(WindowDecorations), WindowDecorations.Full);
 
     /// <summary>
     /// Routed event that can be used for global tracking of window destruction
@@ -209,10 +213,10 @@ public class ManagedWindow : ContentControl
     static ManagedWindow()
     {
         AffectsRender<ManagedWindow>(
-            SystemDecorationsProperty,
+            WindowDecorationsProperty,
             WindowStateProperty);
         AffectsMeasure<ManagedWindow>(
-            SystemDecorationsProperty,
+            WindowDecorationsProperty,
             WindowStateProperty);
 
         // ManagedWindow should be focusable to properly receive keyboard input
@@ -225,22 +229,19 @@ public class ManagedWindow : ContentControl
     {
         SetValue(KeyboardNavigation.TabNavigationProperty, KeyboardNavigationMode.Cycle);
 
-        CloseCommand = ReactiveCommand.Create(() => Close(), outputScheduler: AvaloniaScheduler.Instance);
+        _closeCommand = new ManagedWindowCommand(() => Close());
 
-        RestoreCommand = ReactiveCommand.Create(() => { WindowState = WindowState.Normal; },
-            // NOTE: There appears to be a focus bug in avalonia when the first MenuItem is disabled. So for now we always enable Restore. 
-            canExecute: this.WhenAnyValue(win => win.CanResize, win => win.WindowState, (canResize, windowState) => true), // canResize && windowState != WindowState.Normal),
-            outputScheduler: AvaloniaScheduler.Instance);
+        _restoreCommand = new ManagedWindowCommand(() => { WindowState = WindowState.Normal; },
+            // NOTE: There appears to be a focus bug in avalonia when the first MenuItem is disabled. So for now we always enable Restore.
+            () => true); // canResize && windowState != WindowState.Normal)
 
-        MaximizeCommand = ReactiveCommand.Create(() => { WindowState = WindowState.Maximized; },
-            canExecute: this.WhenAnyValue(win => win.CanResize, win => win.WindowState, (canResize, windowState) => canResize && windowState != WindowState.Maximized),
-            outputScheduler: AvaloniaScheduler.Instance);
+        _maximizeCommand = new ManagedWindowCommand(() => { WindowState = WindowState.Maximized; },
+            () => CanResize && WindowState != WindowState.Maximized);
 
-        MinimizeCommand = ReactiveCommand.Create(() => { WindowState = WindowState.Minimized; },
-            canExecute: this.WhenAnyValue(win => win.CanResize, win => win.WindowState, (canResize, windowState) => canResize && windowState != WindowState.Minimized),
-            outputScheduler: AvaloniaScheduler.Instance);
+        _minimizeCommand = new ManagedWindowCommand(() => { WindowState = WindowState.Minimized; },
+            () => CanResize && WindowState != WindowState.Minimized);
 
-        ShowSystemMenuCommand = ReactiveCommand.Create(() =>
+        _showSystemMenuCommand = new ManagedWindowCommand(() =>
             {
                 if (_systemMenuItem != null)
                 {
@@ -252,19 +253,17 @@ public class ManagedWindow : ContentControl
                         .FirstOrDefault(mi => mi.IsEnabled);
                     firstEnabledChild?.Focus();
                 }
-            },
-            outputScheduler: AvaloniaScheduler.Instance);
+            });
 
-        MoveCommand = ReactiveCommand.Create(() =>
+        _moveCommand = new ManagedWindowCommand(() =>
             {
                 _keyboardMoving = true;
                 _keyboardSizing = false;
                 this.SetPsudoClasses();
             },
-            canExecute: this.WhenAnyValue(win => win.WindowState).Select(state => state == WindowState.Normal),
-            outputScheduler: AvaloniaScheduler.Instance);
+            () => WindowState == WindowState.Normal);
 
-        SizeCommand = ReactiveCommand.Create(() =>
+        _sizeCommand = new ManagedWindowCommand(() =>
             {
                 if (CanResize)
                 {
@@ -274,8 +273,9 @@ public class ManagedWindow : ContentControl
                 }
                 _focus?.Focus();
             },
-            canExecute: this.WhenAnyValue(win => win.CanResize, win => win.WindowState, (canResize, windowState) => canResize && windowState == WindowState.Normal),
-            outputScheduler: AvaloniaScheduler.Instance);
+            () => CanResize && WindowState == WindowState.Normal);
+
+        UpdateCommandStates();
 
         // Don't subscribe to GotFocus here - it causes infinite loops
         // Window activation is handled through PointerPressed events instead
@@ -435,10 +435,10 @@ public class ManagedWindow : ContentControl
     /// <summary>
     /// Sets the system decorations (title bar, border, etc)
     /// </summary>
-    public SystemDecorations SystemDecorations
+    public WindowDecorations WindowDecorations
     {
-        get => GetValue(SystemDecorationsProperty);
-        set => SetValue(SystemDecorationsProperty, value);
+        get => GetValue(WindowDecorationsProperty);
+        set => SetValue(WindowDecorationsProperty, value);
     }
 
     /// <summary>
@@ -633,9 +633,16 @@ public class ManagedWindow : ContentControl
                         }
                     }
                 }
+
+                UpdateCommandStates();
                 break;
 
-            case nameof(SystemDecorations):
+            case nameof(CanResize):
+                SetPsudoClasses();
+                UpdateCommandStates();
+                break;
+
+            case nameof(WindowDecorations):
                 SetPsudoClasses();
                 break;
 
@@ -643,6 +650,15 @@ public class ManagedWindow : ContentControl
                 base.OnPropertyChanged(change);
                 break;
         }
+    }
+
+    private void UpdateCommandStates()
+    {
+        _restoreCommand.RaiseCanExecuteChanged();
+        _maximizeCommand.RaiseCanExecuteChanged();
+        _minimizeCommand.RaiseCanExecuteChanged();
+        _moveCommand.RaiseCanExecuteChanged();
+        _sizeCommand.RaiseCanExecuteChanged();
     }
 
     private void CaptureWindowState(WindowState state)
@@ -1598,16 +1614,16 @@ public class ManagedWindow : ContentControl
                 break;
         }
 
-        switch (SystemDecorations)
+        switch (WindowDecorations)
         {
-            case SystemDecorations.None:
+            case WindowDecorations.None:
                 classes.Add(CLASS_NoBorder);
                 classes.Add(CLASS_NoTitle);
                 break;
-            case SystemDecorations.BorderOnly:
+            case WindowDecorations.BorderOnly:
                 classes.Add(CLASS_NoTitle);
                 break;
-            case SystemDecorations.Full:
+            case WindowDecorations.Full:
             default:
                 break;
         }
@@ -1929,4 +1945,24 @@ public class ManagedWindow : ContentControl
         SetPsudoClasses();
     }
 
+}
+
+internal sealed class ManagedWindowCommand(Action execute, Func<bool>? canExecute = null) : ICommand
+{
+    public event EventHandler? CanExecuteChanged;
+
+    public bool CanExecute(object? parameter)
+    {
+        return canExecute?.Invoke() ?? true;
+    }
+
+    public void Execute(object? parameter)
+    {
+        execute();
+    }
+
+    public void RaiseCanExecuteChanged()
+    {
+        CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+    }
 }

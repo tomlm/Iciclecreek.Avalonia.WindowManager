@@ -69,11 +69,11 @@ namespace Iciclecreek.Avalonia.WindowManager
             AvaloniaProperty.Register<PortableWindow, bool>(nameof(Topmost));
 
         /// <summary>
-        ///     Defines the <see cref="SystemDecorations" /> property.
+        ///     Defines the <see cref="WindowDecorations" /> property.
         /// </summary>
-        public static readonly StyledProperty<SystemDecorations> SystemDecorationsProperty =
-            AvaloniaProperty.Register<PortableWindow, SystemDecorations>(nameof(SystemDecorations),
-                SystemDecorations.Full);
+        public static readonly StyledProperty<WindowDecorations> WindowDecorationsProperty =
+            AvaloniaProperty.Register<PortableWindow, WindowDecorations>(nameof(WindowDecorations),
+                WindowDecorations.Full);
 
         /// <summary>
         ///     Defines the <see cref="AnimateWindow" /> property.
@@ -170,10 +170,10 @@ namespace Iciclecreek.Avalonia.WindowManager
         /// <summary>
         ///     Gets or sets the system decorations (title bar, border, etc).
         /// </summary>
-        public SystemDecorations SystemDecorations
+        public WindowDecorations WindowDecorations
         {
-            get => GetValue(SystemDecorationsProperty);
-            set => SetValue(SystemDecorationsProperty, value);
+            get => GetValue(WindowDecorationsProperty);
+            set => SetValue(WindowDecorationsProperty, value);
         }
 
         /// <summary>
@@ -340,9 +340,8 @@ namespace Iciclecreek.Avalonia.WindowManager
         /// <returns>A new host window instance.</returns>
         protected virtual IPortableWindowHost CreateHost()
         {
-            // currently the only environments which support native system windows are desktop (windows/macos/linux) but non-console.
-            if (Application.Current!.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime &&
-                Application.Current!.ApplicationLifetime!.GetType().Name != "ConsoloniaLifetime")
+            // currently the only environments which support native system windows are desktop (windows/macos/linux).
+            if (Application.Current!.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime)
             {
                 return new SystemWindowHost();
             }

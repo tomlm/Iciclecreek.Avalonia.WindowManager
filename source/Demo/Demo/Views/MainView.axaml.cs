@@ -16,9 +16,8 @@ namespace Demo.Views
             this.DataContext = new MainViewModel();
 
             var lifetime = Application.Current?.ApplicationLifetime;
-            var isDesktopNonConsole = lifetime is IClassicDesktopStyleApplicationLifetime
-                && lifetime.GetType().Name != "ConsoloniaLifetime";
-            ShowSystemWindowButton.IsEnabled = isDesktopNonConsole;
+            var isDesktop = lifetime is IClassicDesktopStyleApplicationLifetime;
+            ShowSystemWindowButton.IsEnabled = isDesktop;
         }
         public MainViewModel ViewModel => (MainViewModel)DataContext;
 

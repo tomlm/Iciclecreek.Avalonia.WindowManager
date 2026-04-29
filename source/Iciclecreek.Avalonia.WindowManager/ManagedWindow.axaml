@@ -1,6 +1,5 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
         xmlns:wm="using:Iciclecreek.Avalonia.WindowManager"
         x:DataType="wm:ManagedWindow">
 
@@ -17,7 +16,7 @@
     <Setter Property="BoxShadow" 
             Value="{DynamicResource ManagedWindow_BoxShadows}"/>
     <Setter Property="Padding" Value="0" />
-    <Setter Property="SystemDecorations" Value="Full"/>
+    <Setter Property="WindowDecorations" Value="Full"/>
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate>

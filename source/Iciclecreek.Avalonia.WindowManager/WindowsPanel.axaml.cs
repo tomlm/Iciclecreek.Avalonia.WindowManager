@@ -133,7 +133,7 @@ namespace Iciclecreek.Avalonia.WindowManager
         /// This handler is kept for potential future use but does not activate windows
         /// to avoid duplicate activation which can cause focus loops.
         /// </summary>
-        private void OnCanvasGotFocus(object? sender, GotFocusEventArgs e)
+        private void OnCanvasGotFocus(object? sender, FocusChangedEventArgs e)
         {
             // Window activation is handled by ManagedWindow.OnGetFocus
             // Do not activate here to avoid duplicate activation and focus loops
@@ -177,7 +177,7 @@ namespace Iciclecreek.Avalonia.WindowManager
             }
         }
 
-        protected override void OnGotFocus(GotFocusEventArgs e)
+        protected override void OnGotFocus(FocusChangedEventArgs e)
         {
             base.OnGotFocus(e);
             
