@@ -458,9 +458,12 @@ public class ManagedWindow : ContentControl
         get => new Size(this._content.Width, this._content.Height);
         protected set
         {
+            var old = new Size(this._content.Width, this._content.Height);
             this._content.Width = value.Width;
             this._content.Height = value.Height;
-        } // TODO ? (this._content.DesiredSize, value);
+            if (old != value)
+                Resized?.Invoke(this, CreateResizedEventArgs(value, WindowResizeReason.Application));
+        }
     }
 
     /// <summary>
@@ -471,9 +474,12 @@ public class ManagedWindow : ContentControl
         get => GetValue(PositionProperty);
         set
         {
+            var old = GetValue(PositionProperty);
             SetValue(PositionProperty, value);
             Canvas.SetLeft(this, value.X);
             Canvas.SetTop(this, value.Y);
+            if (old != value)
+                PositionChanged?.Invoke(this, new PixelPointEventArgs(value));
         }
     }
 
@@ -597,6 +603,15 @@ public class ManagedWindow : ContentControl
     ///   <see cref="Resized"/> event in the case of a Window.
     /// </remarks>
     public event EventHandler<WindowResizedEventArgs>? Resized;
+
+    private static WindowResizedEventArgs CreateResizedEventArgs(Size clientSize, WindowResizeReason reason)
+    {
+        // WindowResizedEventArgs has an internal constructor, so use reflection
+        var ctor = typeof(WindowResizedEventArgs).GetConstructor(
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+            null, [typeof(Size), typeof(WindowResizeReason)], null);
+        return (WindowResizedEventArgs)ctor!.Invoke([clientSize, reason]);
+    }
 
     /// <summary>
     /// Fired before a window is closed.
@@ -1332,6 +1347,18 @@ public class ManagedWindow : ContentControl
 
         _content = e.NameScope.Find<ContentPresenter>(PART_ContentPresenter)!;
         ArgumentNullException.ThrowIfNull(_content);
+
+        // Watch content presenter bounds to fire Resized when the content area changes size
+        Size lastContentBoundsSize = default;
+        _content.GetObservable(BoundsProperty).Subscribe(bounds =>
+        {
+            var size = new Size(bounds.Width, bounds.Height);
+            if (size != lastContentBoundsSize && size.Width > 0 && size.Height > 0)
+            {
+                lastContentBoundsSize = size;
+                Resized?.Invoke(this, CreateResizedEventArgs(size, WindowResizeReason.Unspecified));
+            }
+        });
 
         _modalOverlay = e.NameScope.Find<Panel>(PART_ModalOverlay);
         if (_modalOverlay != null)
