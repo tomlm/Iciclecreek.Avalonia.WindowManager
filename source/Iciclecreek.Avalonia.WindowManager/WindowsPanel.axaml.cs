@@ -199,7 +199,12 @@ namespace Iciclecreek.Avalonia.WindowManager
                     }
                     else
                     {
-                        Debug.WriteLine($"[WindowsPanel] No active window to focus");
+                        Debug.WriteLine($"[WindowsPanel] No active window, focusing panel content");
+                        // No child windows — let focus go to the panel's own content
+                        var firstFocusable = this.GetVisualDescendants()
+                            .OfType<Control>()
+                            .FirstOrDefault(c => c.Focusable && c != this);
+                        firstFocusable?.Focus();
                     }
                 }, DispatcherPriority.Input);
             }
