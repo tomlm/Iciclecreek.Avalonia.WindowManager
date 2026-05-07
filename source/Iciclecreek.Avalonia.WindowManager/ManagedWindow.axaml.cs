@@ -1858,10 +1858,10 @@ public class ManagedWindow : ContentControl
     StandardCursorType GetCursorForEdge(WindowEdge? edge)
         => edge switch
         {
-            WindowEdge.North => StandardCursorType.SizeNorthSouth,
-            WindowEdge.South => StandardCursorType.SizeNorthSouth,
-            WindowEdge.West => StandardCursorType.SizeWestEast,
-            WindowEdge.East => StandardCursorType.SizeWestEast,
+            WindowEdge.North => StandardCursorType.TopSide,
+            WindowEdge.South => StandardCursorType.BottomSide,
+            WindowEdge.West => StandardCursorType.LeftSide,
+            WindowEdge.East => StandardCursorType.RightSide,
             WindowEdge.NorthWest => StandardCursorType.TopLeftCorner,
             WindowEdge.NorthEast => StandardCursorType.TopRightCorner,
             WindowEdge.SouthWest => StandardCursorType.BottomLeftCorner,
