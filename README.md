@@ -1,6 +1,6 @@
 # Iciclecreek.Avalonia.WindowManager 
 
-[![NuGet Version](https://img.shields.io/badge/nuget-v4.0.3-blue.svg)](https://www.nuget.org/packages/Iciclecreek.Avalonia.WindowManager/)
+[![NuGet Version](https://img.shields.io/badge/nuget-v4.0.4-blue.svg)](https://www.nuget.org/packages/Iciclecreek.Avalonia.WindowManager/)
 [![Build Status](https://github.com/tomlm/Iciclecreek.Avalonia.WindowManager/actions/workflows/BuildAndRunTests.yml/badge.svg)](https://github.com/tomlm/Iciclecreek.Avalonia.WindowManager/actions/workflows/BuildAndRunTests.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 

@@ -180,33 +180,17 @@ namespace Iciclecreek.Avalonia.WindowManager
         protected override void OnGotFocus(GotFocusEventArgs e)
         {
             base.OnGotFocus(e);
-            
-            Debug.WriteLine($"[WindowsPanel] OnGotFocus: Source={e.Source?.GetType().Name}");
 
-            // If the WindowsPanel itself got focus (not a child), redirect to active window
+            // If the WindowsPanel itself got focus (not a child), redirect to the
+            // active ManagedWindow if one exists. When no child window is active,
+            // don't redirect — let Avalonia's normal focus behavior work.
             if (e.Source == this)
             {
-                Debug.WriteLine($"[WindowsPanel] Panel itself got focus, redirecting to active window");
-                Dispatcher.UIThread.Post(() =>
+                var activeWindow = ActiveWindow;
+                if (activeWindow != null)
                 {
-                    EnsureActiveWindow();
-                    var activeWindow = ActiveWindow;
-                    if (activeWindow != null)
-                    {
-                        Debug.WriteLine($"[WindowsPanel] Focusing content of '{activeWindow.Title}'");
-                        // Focus the active window's content
-                        activeWindow.FocusContent();
-                    }
-                    else
-                    {
-                        Debug.WriteLine($"[WindowsPanel] No active window, focusing panel content");
-                        // No child windows — let focus go to the panel's own content
-                        var firstFocusable = this.GetVisualDescendants()
-                            .OfType<Control>()
-                            .FirstOrDefault(c => c.Focusable && c != this);
-                        firstFocusable?.Focus();
-                    }
-                }, DispatcherPriority.Input);
+                    Dispatcher.UIThread.Post(() => activeWindow.FocusContent(), DispatcherPriority.Input);
+                }
             }
         }
 
