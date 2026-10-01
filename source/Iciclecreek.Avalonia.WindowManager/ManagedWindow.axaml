@@ -26,7 +26,8 @@
                   BorderThickness="{TemplateBinding ResizeThickness}"
                   Background="Transparent">
             <!--inner visible border for visual styling -->
-            <Border BorderBrush="{TemplateBinding BorderBrush}"
+            <Border Name="PART_FrameBorder"
+                    BorderBrush="{TemplateBinding BorderBrush}"
                     BorderThickness="{TemplateBinding BorderThickness}"
                     BoxShadow="{TemplateBinding BoxShadow}"
                     CornerRadius="{TemplateBinding CornerRadius}">
@@ -185,6 +186,11 @@
 
     <!--maximized-->
     <Style Selector="^:maximized /template/ Border#PART_WindowBorder">
+      <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+
+    <!-- a maximized window has no visible frame, so the title bar and content reach the edges -->
+    <Style Selector="^:maximized /template/ Border#PART_FrameBorder">
       <Setter Property="BorderThickness" Value="0"/>
       <Setter Property="BoxShadow" Value="0 0 0 Transparent"/>
     </Style>
