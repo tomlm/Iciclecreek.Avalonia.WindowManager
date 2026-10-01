@@ -1852,13 +1852,22 @@ public class ManagedWindow : ContentControl
         double right = left + this.Bounds.Width;
         double bottom = top + this.Bounds.Height;
 
+        // Borderless windows have no resize zone, unless the theme's template still draws a frame
+        // on PART_WindowBorder for them (Consolonia's TurboVision theme does).
+        if (WindowDecorations == WindowDecorations.None && border.BorderThickness == default)
+            return null;
+
+        // The resize zone is measured inward from the window's outer edge, so with the default
+        // (ResizeThickness == BorderThickness) it is exactly the visible border.
+        var thickness = ResizeThickness == default ? BorderThickness : ResizeThickness;
+
         var leftEdge = start.Value.X >= left &&
-                       start.Value.X < left + border.BorderThickness.Left - border.Margin.Left;
-        var rightEdge = start.Value.X >= right - border.BorderThickness.Right - border.Margin.Right &&
+                       start.Value.X < left + thickness.Left - border.Margin.Left;
+        var rightEdge = start.Value.X >= right - thickness.Right - border.Margin.Right &&
                         start.Value.X < right;
         var topEdge = start.Value.Y >= top &&
-                        start.Value.Y < top + border.BorderThickness.Top - border.Margin.Top;
-        var bottomEdge = start.Value.Y >= bottom - border.BorderThickness.Bottom - border.Margin.Bottom &&
+                        start.Value.Y < top + thickness.Top - border.Margin.Top;
+        var bottomEdge = start.Value.Y >= bottom - thickness.Bottom - border.Margin.Bottom &&
                         start.Value.Y < bottom;
         if (topEdge && leftEdge)
             return WindowEdge.NorthWest;
