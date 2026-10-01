@@ -6,8 +6,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>5.0.1</Version>
-    <AssemblyVersion>5.0.1.0</AssemblyVersion>
+    <Version>5.0.2</Version>
+    <AssemblyVersion>5.0.2.0</AssemblyVersion>
     <Description>This library implements a window manager for Avalonia 12.x with managed avalonia windows instead of native windows.</Description>
     <Company>Iciclecreek</Company>
     <Authors>Tom Laird-McConnell</Authors>
@@ -40,10 +40,6 @@
 
   <ItemGroup>
     <AvaloniaResource Include="**/*.*xaml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\Porta.Pty\src\Porta.Pty\Porta.Pty.csproj" />
   </ItemGroup>
 
 </Project>
