@@ -20,10 +20,10 @@
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate>
-          <!--outer invisible border for resize hit-testing (uses ResizeThickness) -->
+          <!--outer transparent host for resize hit-testing. It takes no layout space, so the
+              resize zone (ResizeThickness, measured inward from the window edge in GetEdge)
+              lands on the visible border below instead of on an invisible ring outside it. -->
           <Border Name="PART_WindowBorder"
-                  BorderBrush="Transparent"
-                  BorderThickness="{TemplateBinding ResizeThickness}"
                   Background="Transparent">
             <!--inner visible border for visual styling -->
             <Border Name="PART_FrameBorder"
