@@ -1393,7 +1393,10 @@ public class ManagedWindow : ContentControl
         _windowBorder = e.NameScope.Find<Border>(PART_WindowBorder);
         SetupResize(_windowBorder);
 
-        this.Tapped += OnTapped;
+        // No activation on Tapped. The tunnelling PointerPressed handler above already activates
+        // the window on any press inside it, and Tapped arrives AFTER the press's Click has run --
+        // so a button that opened another window had its own window take activation back the
+        // moment the gesture completed, and the new window went behind the one that opened it.
         _loaded = true;
     }
 
@@ -1505,14 +1508,6 @@ public class ManagedWindow : ContentControl
             return;
         }
         s_MRU = null;
-    }
-
-    private void OnTapped(object? sender, TappedEventArgs e)
-    {
-        if (!IsActive)
-        {
-            Activate();
-        }
     }
 
     /// <summary>
